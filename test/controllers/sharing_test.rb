@@ -35,6 +35,15 @@ class SharingTest < ActionDispatch::IntegrationTest
     assert_select "#inherited", count: 0
   end
 
+  test "every field has its own id, so each label points at its own field" do
+    switch_to users(:alice)
+    get sharing_note_path(notes(:alice_private))
+
+    ids = css_select("[id]").map { |element| element["id"] }
+    assert_equal ids.uniq, ids
+    css_select("main label[for]").each { |label| assert_select "##{label['for']}", 1 }
+  end
+
   test "a folder's page posts the folder id" do
     switch_to users(:alice)
     get sharing_folder_path(folders(:alice_folder))

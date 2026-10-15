@@ -28,7 +28,7 @@
     <% @shares.each do |share| %>
       <div class="row g-2 align-items-center border-bottom py-2">
         <div class="col-sm-5"><%= grantee_label(share.grantee) %></div>
-        <%= form_with model: share, url: share_path(share), method: :patch, class: "col-sm-auto d-flex gap-2" do |form| %>
+        <%= form_with model: share, url: share_path(share), method: :patch, namespace: dom_id(share), class: "col-sm-auto d-flex gap-2" do |form| %>
           <%= form.label :access, "Access for #{share.grantee.name}", class: "visually-hidden" %>
           <%= form.select :access, access_options, {}, class: "form-select" %>
           <%= form.submit "Save", class: "btn btn-outline-primary" %>
@@ -45,7 +45,7 @@
 
 <h2 class="h5">Add a person</h2>
 
-<%= form_with scope: :share, url: shares_path, id: "add_person", class: "row g-2 align-items-center mb-5" do |form| %>
+<%= form_with scope: :share, url: shares_path, id: "add_person", namespace: "add_person", class: "row g-2 align-items-center mb-5" do |form| %>
   <%= form.hidden_field item_key, value: @shareable.id %>
   <div class="col-sm-5">
     <%= form.label :email, "Email address", class: "visually-hidden" %>
@@ -63,7 +63,7 @@
 <h2 class="h5">Add a team</h2>
 
 <% if @teams.any? %>
-  <%= form_with scope: :share, url: shares_path, id: "add_team", class: "row g-2 align-items-center mb-5" do |form| %>
+  <%= form_with scope: :share, url: shares_path, id: "add_team", namespace: "add_team", class: "row g-2 align-items-center mb-5" do |form| %>
     <%= form.hidden_field item_key, value: @shareable.id %>
     <div class="col-sm-5">
       <%= form.label :team_id, "Team", class: "visually-hidden" %>
