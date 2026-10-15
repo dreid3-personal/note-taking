@@ -1,0 +1,46 @@
+<% content_for :title, "Users" %>
+
+<h1 class="h3 mb-4">Users</h1>
+
+<% if @users.any? %>
+  <table class="table mb-5">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @users.each do |user| %>
+        <tr>
+          <td><%= user.name %></td>
+          <td><%= user.email %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="mb-5">There are no users yet.</p>
+<% end %>
+
+<h2 class="h5">Add a user</h2>
+
+<%= form_with model: @user, class: "row g-2 align-items-start" do |form| %>
+  <div class="col-sm-4">
+    <%= form.label :name, class: "visually-hidden" %>
+    <%= form.text_field :name, placeholder: "Name", class: [ "form-control", { "is-invalid" => @user.errors.include?(:name) } ] %>
+    <% @user.errors.full_messages_for(:name).each do |message| %>
+      <div class="invalid-feedback"><%= message %></div>
+    <% end %>
+  </div>
+  <div class="col-sm-5">
+    <%= form.label :email, class: "visually-hidden" %>
+    <%= form.email_field :email, placeholder: "Email", class: [ "form-control", { "is-invalid" => @user.errors.include?(:email) } ] %>
+    <% @user.errors.full_messages_for(:email).each do |message| %>
+      <div class="invalid-feedback"><%= message %></div>
+    <% end %>
+  </div>
+  <div class="col-sm-auto">
+    <%= form.submit "Add user", class: "btn btn-primary" %>
+  </div>
+<% end %>

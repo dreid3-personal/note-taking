@@ -169,6 +169,9 @@ A table of users and a form to add one, both on the same page. If the form is in
 because the email is already taken, the page shows the error next to the field and keeps what was
 typed. Editing and deleting users are out of scope for now.
 
+The Users page works without a current user, so the first user can be added before anyone is picked
+in the switcher.
+
 ## Teams pages
 
 ### Teams list (`/teams`)
