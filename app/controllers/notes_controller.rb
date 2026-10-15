@@ -1,4 +1,6 @@
 class NotesController < ApplicationController
+  include Shareable
+
   STALE = "This note was changed by someone else.".freeze
 
   before_action :require_current_user, except: :index

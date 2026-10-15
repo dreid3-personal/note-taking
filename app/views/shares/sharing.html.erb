@@ -1,0 +1,92 @@
+<% name = item_name(@shareable) %>
+<% content_for :title, "Share \"#{name}\"" %>
+<% item_key = @shareable.is_a?(Folder) ? :folder_id : :note_id %>
+
+<div class="d-flex align-items-center gap-2 mb-4">
+  <h1 class="h3 mb-0 me-auto">Share "<%= name %>"</h1>
+  <%= link_to "Done", @shareable, class: "btn btn-outline-secondary btn-sm" %>
+</div>
+
+<%= form_with url: polymorphic_path([ :sharing, @shareable ]), method: :patch, id: "everyone",
+      class: "row g-2 align-items-center mb-5" do |form| %>
+  <div class="col-sm-5">
+    <%= form.label :everyone_access, "Everyone", class: "fw-semibold" %>
+  </div>
+  <div class="col-sm-3">
+    <%= form.select :everyone_access, access_options(everyone: true), { selected: @shareable.everyone_access },
+          class: "form-select" %>
+  </div>
+  <div class="col-sm-auto">
+    <%= form.submit "Save", class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<h2 class="h5">People and teams with access</h2>
+
+<% if @shares.any? %>
+  <div id="shares" class="mb-5">
+    <% @shares.each do |share| %>
+      <div class="row g-2 align-items-center border-bottom py-2">
+        <div class="col-sm-5"><%= grantee_label(share.grantee) %></div>
+        <%= form_with model: share, url: share_path(share), method: :patch, class: "col-sm-auto d-flex gap-2" do |form| %>
+          <%= form.label :access, "Access for #{share.grantee.name}", class: "visually-hidden" %>
+          <%= form.select :access, access_options, {}, class: "form-select" %>
+          <%= form.submit "Save", class: "btn btn-outline-primary" %>
+        <% end %>
+        <div class="col-sm-auto">
+          <%= button_to "Remove", share_path(share), method: :delete, class: "btn btn-outline-danger" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p class="mb-5">Not shared with anyone yet.</p>
+<% end %>
+
+<h2 class="h5">Add a person</h2>
+
+<%= form_with scope: :share, url: shares_path, id: "add_person", class: "row g-2 align-items-center mb-5" do |form| %>
+  <%= form.hidden_field item_key, value: @shareable.id %>
+  <div class="col-sm-5">
+    <%= form.label :email, "Email address", class: "visually-hidden" %>
+    <%= form.email_field :email, placeholder: "Email address", required: true, class: "form-control" %>
+  </div>
+  <div class="col-sm-3">
+    <%= form.label :access, "Access", class: "visually-hidden" %>
+    <%= form.select :access, access_options, {}, class: "form-select" %>
+  </div>
+  <div class="col-sm-auto">
+    <%= form.submit "Add", class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<h2 class="h5">Add a team</h2>
+
+<% if @teams.any? %>
+  <%= form_with scope: :share, url: shares_path, id: "add_team", class: "row g-2 align-items-center mb-5" do |form| %>
+    <%= form.hidden_field item_key, value: @shareable.id %>
+    <div class="col-sm-5">
+      <%= form.label :team_id, "Team", class: "visually-hidden" %>
+      <%= form.select :team_id, @teams.map { |team| [ team.name, team.id ] }, { include_blank: "Pick a team" },
+            required: true, class: "form-select" %>
+    </div>
+    <div class="col-sm-3">
+      <%= form.label :access, "Access", class: "visually-hidden" %>
+      <%= form.select :access, access_options, {}, class: "form-select" %>
+    </div>
+    <div class="col-sm-auto">
+      <%= form.submit "Add", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+<% else %>
+  <p class="mb-5">There are no teams yet.</p>
+<% end %>
+
+<% if @inherited_grants.any? %>
+  <h2 class="h5">Also has access through a parent folder</h2>
+  <ul id="inherited">
+    <% @inherited_grants.each do |grant| %>
+      <li><%= inherited_grant_label(grant) %></li>
+    <% end %>
+  </ul>
+<% end %>
