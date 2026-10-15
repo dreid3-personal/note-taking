@@ -54,8 +54,13 @@ class FoldersController < ApplicationController
       @folder = Folder.find(params[:id])
     end
 
+    # The parent comes from ?parent_id= on the new page and folder[parent_id] on create. Anything
+    # but a single id, such as an array, is treated as an id that doesn't exist: a 404, whether or
+    # not the folder is there.
     def set_parent
-      parent_id = action_name == "new" ? params[:parent_id] : params.dig(:folder, :parent_id)
+      parent_id = action_name == "new" ? params[:parent_id] : folder_params && params[:folder][:parent_id]
+      raise ActiveRecord::RecordNotFound unless parent_id.nil? || parent_id.is_a?(String)
+
       @parent = Folder.find(parent_id) if parent_id.present?
     end
 

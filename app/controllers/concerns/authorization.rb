@@ -27,7 +27,11 @@ module Authorization
     # - :edit    edit a note, or create a note or folder inside a folder;
     # - :rename  rename a folder (edit access, but never a team folder);
     # - :author  share, move or delete it (its author only, and never a team folder).
+    #
+    # Nothing is allowed without a current user.
     def allowed_to?(action, item)
+      return false unless current_user
+
       case action
       when :view then access_resolver.can_view?(item)
       when :edit then access_resolver.can_edit?(item)
@@ -40,9 +44,10 @@ module Authorization
     # Renders a 404 or redirects unless the current user may do `action` (see allowed_to?) with
     # the item. Called from a before_action, a refusal stops the request.
     def require_access!(item, action)
+      return render_not_found unless item.is_a?(Note) || item.is_a?(Folder)
       return if allowed_to?(action, item)
 
-      if access_resolver.can_view?(item)
+      if current_user && access_resolver.can_view?(item)
         redirect_to item, alert: NOT_ALLOWED, status: :see_other
       else
         render_not_found

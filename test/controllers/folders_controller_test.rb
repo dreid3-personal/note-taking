@@ -159,6 +159,42 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
     assert_not_found
   end
 
+  test "a parent_id that isn't a single id is a 404, the same for a hidden folder and a missing one" do
+    switch_to users(:dave)
+
+    get new_folder_path(parent_id: [ folders(:alice_folder).id ])
+    assert_not_found
+    hidden_body = response.body
+    get new_folder_path(parent_id: [ 0 ])
+    assert_not_found
+    assert_equal hidden_body, response.body
+
+    assert_no_difference "Folder.count" do
+      post folders_path, params: { folder: { name: "Dave's", parent_id: [ folders(:alice_folder).id ] } }
+      assert_not_found
+      post folders_path, params: { folder: { name: "Dave's", parent_id: [ 0 ] } }
+      assert_not_found
+    end
+  end
+
+  test "a hidden folder and a missing one get the same 404 page" do
+    switch_to users(:dave)
+    get folder_path(folders(:alice_folder))
+    hidden = [ response.status, response.media_type, response.body ]
+
+    get folder_path(id: 0)
+    assert_equal hidden, [ response.status, response.media_type, response.body ]
+  end
+
+  test "create without a folder hash is a bad request" do
+    switch_to users(:dave)
+
+    assert_no_difference "Folder.count" do
+      post folders_path, params: { folder: "x" }
+    end
+    assert_response :bad_request
+  end
+
   test "create with a blank name shows the error" do
     switch_to users(:alice)
 

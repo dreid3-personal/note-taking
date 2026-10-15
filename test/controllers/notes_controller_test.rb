@@ -139,6 +139,15 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     assert_not_found
   end
 
+  test "a hidden note and a missing one get the same 404 page" do
+    switch_to users(:dave)
+    get note_path(notes(:alice_private))
+    hidden = [ response.status, response.media_type, response.body ]
+
+    get note_path(id: 0)
+    assert_equal hidden, [ response.status, response.media_type, response.body ]
+  end
+
   test "an author still sees their note in a team folder after leaving the team, under My notes" do
     note = Note.create!(title: "Bob eng note", author: users(:bob), folder: folders(:engineering))
     memberships(:bob_engineering).destroy
