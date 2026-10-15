@@ -57,11 +57,11 @@ class MarkdownRendererTest < ActiveSupport::TestCase
 
       <img src="x.png" onerror="alert(2)">
 
-      ![pic](x.png "t\\" onerror=\\"alert(3)")
+      [link](/notes "t\\" onclick=\\"alert(3)")
     MARKDOWN
 
     attributes = Nokogiri::HTML5.fragment(html).css("*").flat_map { |node| node.attribute_nodes.map(&:name) }
-    assert_includes attributes, "src"
+    assert_includes attributes, "href"
     assert_empty attributes.grep(/\Aon/i)
   end
 
@@ -69,6 +69,37 @@ class MarkdownRendererTest < ActiveSupport::TestCase
     html = render("[click](javascript:alert(1))\n\n<a href=\"javascript:alert(2)\">raw</a>\n\n[enc](JaVaScRiPt&#58;alert(3))")
 
     assert_no_match(/javascript/i, html)
+  end
+
+  test "removes javascript and data links written in other forms" do
+    html = render(<<~MARKDOWN)
+      [spaced]( javascript:alert(1)) [angled](<javascript:alert(1)>) [data](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)
+
+      [ref][r]
+
+      [r]: javascript:alert(2)
+    MARKDOWN
+
+    assert_no_match(/javascript|data:/i, html)
+  end
+
+  test "removes iframes and style blocks" do
+    html = render(<<~MARKDOWN)
+      <iframe src="https://example.com"></iframe>
+
+      <style>body { display: none }</style>
+
+      Text with <iframe src="https://example.com"></iframe> inline.
+    MARKDOWN
+
+    assert_includes html, "Text with"
+    assert_no_match(/<iframe|<style|display: none/i, html)
+  end
+
+  test "drops images so notes can't load remote URLs" do
+    html = render("![pixel](https://tracker.example/p.png) and <img src=\"https://tracker.example/q.png\">")
+
+    assert_no_match(/<img|tracker\.example/i, html)
   end
 
   test "returns an html_safe string and handles nil" do

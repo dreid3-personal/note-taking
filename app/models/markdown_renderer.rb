@@ -13,11 +13,11 @@ class MarkdownRenderer
   ALLOWED_TAGS = %w[
     h1 h2 h3 h4 h5 h6 p br hr blockquote
     ul ol li input
-    strong em del code pre a img
+    strong em del code pre a
     table thead tbody tr th td
   ].freeze
 
-  ALLOWED_ATTRIBUTES = %w[href src alt title class type checked disabled align start].freeze
+  ALLOWED_ATTRIBUTES = %w[href title class type checked disabled align start].freeze
 
   def self.render(markdown)
     new.render(markdown)
