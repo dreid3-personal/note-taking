@@ -1,4 +1,6 @@
-# Run using bin/ci
+# Run using bin/ci (on Windows: ruby bin/ci)
+#
+# Steps are launched through `ruby` because Windows can't execute shebang scripts.
 
 CI.run do
   step "Setup", "ruby bin/setup --skip-server"
