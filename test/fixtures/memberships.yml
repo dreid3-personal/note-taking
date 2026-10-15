@@ -1,0 +1,11 @@
+alice_engineering:
+  user: alice
+  team: engineering
+
+bob_engineering:
+  user: bob
+  team: engineering
+
+carol_design:
+  user: carol
+  team: design

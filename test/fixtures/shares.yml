@@ -1,0 +1,9 @@
+alice_private_carol:
+  note: alice_private
+  user: carol
+  access: view
+
+alice_folder_design:
+  folder: alice_folder
+  team: design
+  access: view

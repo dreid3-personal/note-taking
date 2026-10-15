@@ -1,0 +1,16 @@
+# The people from E2E 1 in TEST_PLAN.md.
+alice:
+  name: Alice
+  email: alice@example.com
+
+bob:
+  name: Bob
+  email: bob@example.com
+
+carol:
+  name: Carol
+  email: carol@example.com
+
+dave:
+  name: Dave
+  email: dave@example.com
