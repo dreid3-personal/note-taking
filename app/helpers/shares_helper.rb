@@ -21,8 +21,10 @@ module SharesHelper
   end
 
   # "👥 Design (can view, from 📁 Specs)", for the "Also has access through a parent folder" list.
+  # A folder the current user can't open isn't named: "from a parent folder".
   def inherited_grant_label(grant)
     grantee = grant.grantee.is_a?(User) ? grant.grantee.name : grantee_label(grant.grantee)
-    "#{grantee} (#{access_label(grant.level).downcase}, from 📁 #{grant.folder.name})"
+    source = grant.folder ? "📁 #{grant.folder.name}" : "a parent folder"
+    "#{grantee} (#{access_label(grant.level).downcase}, from #{source})"
   end
 end

@@ -15,6 +15,8 @@ The screens and interactions for Note Taker. For the data model and permission r
   CDN. We don't use Bootstrap's JavaScript, so there are no modals or dropdown menus. Every action is
   a normal page or a form.
 - **Icons are emoji** (📁 folder, 📄 note) rather than an icon library.
+- **A JSON REST API sits next to the pages,** under `/api`, with its own controllers. See
+  [API.md](API.md).
 
 ## Layout
 
@@ -185,7 +187,8 @@ Also has access through a parent folder:
   page can't remove, because inherited access can only be added to, never taken away. Each person
   or team is listed once, at the highest level they inherit, from the nearest folder that gives it.
   The list runs nearest folder first; within a folder, its author (or team), then Everyone, then
-  its shares in the order they were added.
+  its shares in the order they were added. A folder the author can't open (say, above a shared
+  folder they made a note in) isn't named: the line reads "from a parent folder".
 
 ## Users page (`/users`)
 

@@ -5,6 +5,9 @@
 # - no access at all: a 404, exactly like a record that doesn't exist;
 # - some access, but not enough: a redirect to the item with "You don't have permission to do that."
 #
+# The JSON API (Api::BaseController) includes it too, and overrides render_not_found and
+# render_not_allowed to answer with a JSON 404 and 403 instead.
+#
 #   before_action -> { require_access!(@note, :view) }, only: :show
 #   before_action -> { require_access!(@folder, :rename) }, only: %i[edit update]
 #   before_action -> { require_author!(@folder) }, only: :destroy
@@ -16,7 +19,7 @@ module Authorization
   NOT_ALLOWED = "You don't have permission to do that.".freeze
 
   included do
-    helper_method :allowed_to?
+    helper_method :allowed_to? if respond_to?(:helper_method)
     rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   end
 
@@ -48,7 +51,7 @@ module Authorization
       return if allowed_to?(action, item)
 
       if current_user && access_resolver.can_view?(item)
-        redirect_to item, alert: NOT_ALLOWED, status: :see_other
+        render_not_allowed(item)
       else
         render_not_found
       end
@@ -58,6 +61,15 @@ module Authorization
       require_access!(item, :author)
     end
 
+    # AccessResolver.inherited_grants(item) for the sharing page and API, without naming a folder
+    # the current user can't open: the author of a note inside a shared folder may not see the
+    # folders above that. Such a grant keeps its grantee and level, with no folder.
+    def visible_inherited_grants(item)
+      AccessResolver.inherited_grants(item).map do |grant|
+        allowed_to?(:view, grant.folder) ? grant : grant.with(folder: nil)
+      end
+    end
+
     # One resolver per request, so the user's teams and shares are loaded once.
     def access_resolver
       @access_resolver ||= AccessResolver.new(current_user)
@@ -65,6 +77,10 @@ module Authorization
 
     def team_folder?(item)
       item.is_a?(Folder) && item.team_folder?
+    end
+
+    def render_not_allowed(item)
+      redirect_to item, alert: NOT_ALLOWED, status: :see_other
     end
 
     def render_not_found
