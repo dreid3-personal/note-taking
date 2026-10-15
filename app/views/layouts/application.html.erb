@@ -31,8 +31,7 @@
       <ul class="nav nav-pills flex-column mb-auto">
         <li class="nav-item"><%= sidebar_link "📄 Notes", root_path, :notes %></li>
         <li class="nav-item"><%= sidebar_link "👤 Users", users_path, :users %></li>
-        <%# The Teams pages come in a later change, which turns this into a link. %>
-        <li class="nav-item"><span class="nav-link disabled">👥 Teams</span></li>
+        <li class="nav-item"><%= sidebar_link "👥 Teams", teams_path, :teams %></li>
       </ul>
 
       <%# The CSP initializer is off, so this inline onchange runs. Enabling script-src would need

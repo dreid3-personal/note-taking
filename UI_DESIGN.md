@@ -205,5 +205,7 @@ Add a member
 ```
 
 - The **Add a member** dropdown lists users who aren't in the team yet.
-- **Rename** changes the team name and its team folder's name together.
-- Any user can manage any team: for a local app, that's simpler than having team admins.
+- **Rename** opens `GET /teams/:id/edit`, a name field. It changes the team name and its team
+  folder's name together.
+- Any user can manage any team: for a local app, that's simpler than having team admins. The Teams
+  pages do need a current user, who becomes the creator of any team they add.

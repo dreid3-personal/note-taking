@@ -1,0 +1,28 @@
+<% content_for :title, "Teams" %>
+
+<h1 class="h3 mb-4">Teams</h1>
+
+<% if @teams.any? %>
+  <table class="table mb-5">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Members</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @teams.each do |team| %>
+        <tr>
+          <td><%= link_to team.name, team %></td>
+          <td><%= team.members_count %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="mb-5">There are no teams yet.</p>
+<% end %>
+
+<h2 class="h5">Add a team</h2>
+
+<%= render "form", team: @team, submit: "Add team" %>
