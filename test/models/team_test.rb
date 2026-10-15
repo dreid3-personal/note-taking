@@ -49,4 +49,12 @@ class TeamTest < ActiveSupport::TestCase
     assert_not team.update(name: "Design")
     assert_equal "Engineering", folders(:engineering).reload.name
   end
+
+  test "a name can be up to 100 characters" do
+    assert Team.new(name: "a" * 100).valid?
+
+    team = Team.new(name: "a" * 101)
+    assert_not team.valid?
+    assert_includes team.errors[:name], "is too long (maximum is 100 characters)"
+  end
 end

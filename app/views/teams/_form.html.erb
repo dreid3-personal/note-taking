@@ -1,7 +1,7 @@
 <%= form_with model: team, class: "row g-2 align-items-start" do |form| %>
   <div class="col-sm-5">
     <%= form.label :name, class: "visually-hidden" %>
-    <%= form.text_field :name, placeholder: "Name", class: [ "form-control", { "is-invalid" => team.errors.include?(:name) } ] %>
+    <%= form.text_field :name, placeholder: "Name", maxlength: Team::NAME_MAX_LENGTH, class: [ "form-control", { "is-invalid" => team.errors.include?(:name) } ] %>
     <% team.errors.full_messages_for(:name).each do |message| %>
       <div class="invalid-feedback"><%= message %></div>
     <% end %>

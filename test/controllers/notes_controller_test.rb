@@ -103,9 +103,19 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "a[href=?]", edit_note_path(notes(:alice_nested)), "Edit"
     assert_select "a[href=?]", sharing_note_path(notes(:alice_nested)), "Share"
-    assert_select "a[href=?]", move_note_path(notes(:alice_nested)), "Move"
     assert_select "form[action=?][data-turbo-confirm] button", note_path(notes(:alice_nested)), "Delete"
+    assert_no_buttons "Move"
     assert_texts ".breadcrumb a", [ "Notes", "My notes", "Alice folder" ]
+  end
+
+  test "moving isn't supported: there is no move page" do
+    switch_to users(:alice)
+
+    get "/notes/#{notes(:alice_nested).id}/move"
+    assert_response :not_found
+    patch "/notes/#{notes(:alice_nested).id}/move", params: { note: { folder_id: "" } }
+    assert_response :not_found
+    assert_equal folders(:alice_folder), notes(:alice_nested).reload.folder
   end
 
   test "show gives a viewer no buttons" do
@@ -113,7 +123,7 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     get note_path(notes(:alice_nested))
 
     assert_response :success
-    assert_no_buttons "Edit", "Share", "Move", "Delete"
+    assert_no_buttons "Edit", "Share", "Delete"
     assert_texts ".breadcrumb a", [ "Notes", "Shared with me", "Alice folder" ]
   end
 
@@ -122,7 +132,7 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     get note_path(notes(:eng_plan))
 
     assert_select "a", "Edit"
-    assert_no_buttons "Share", "Move", "Delete"
+    assert_no_buttons "Share", "Delete"
     assert_texts ".breadcrumb a", [ "Notes", "Team folders", "Engineering" ]
   end
 
@@ -309,6 +319,16 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Bob's plan", folders(:engineering), users(:alice) ], [ note.reload.body, note.folder, note.author ]
   end
 
+  test "the author can't move a note with the edit form either" do
+    note = notes(:alice_nested)
+    switch_to users(:alice)
+
+    patch note_path(note), params: { note: { title: "Alice nested", body: "Moved?", folder_id: "", lock_version: note.lock_version } }
+
+    assert_redirected_to note
+    assert_equal [ "Moved?", folders(:alice_folder) ], [ note.reload.body, note.folder ]
+  end
+
   test "saving over someone else's newer edit shows a message, keeps what was typed and saves nothing" do
     note = notes(:eng_plan)
     opened_version = note.lock_version
@@ -470,5 +490,17 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
       delete note_path(notes(:alice_private))
     end
     assert_asked_to_pick_user
+  end
+
+  test "saving an over-long body shows the error, and the fields have a maxlength" do
+    note = notes(:alice_nested)
+    switch_to users(:alice)
+    patch note_path(note), params: { note: { title: note.title, body: "a" * 100_001, lock_version: note.lock_version } }
+
+    assert_response :unprocessable_entity
+    assert_select "textarea.is-invalid ~ .invalid-feedback", "Body is too long (100,001 characters; the maximum is 100,000)"
+    assert_select "input[name='note[title]'][maxlength='200']"
+    assert_select "textarea[name='note[body]'][maxlength='100000']"
+    assert_equal "Inside Alice folder.", note.reload.body
   end
 end

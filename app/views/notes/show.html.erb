@@ -9,7 +9,6 @@
   <% end %>
   <% if allowed_to?(:author, @note) %>
     <%= link_to "Share", sharing_note_path(@note), class: "btn btn-outline-secondary btn-sm" %>
-    <%= link_to "Move", move_note_path(@note), class: "btn btn-outline-secondary btn-sm" %>
     <%= button_to "Delete", note_path(@note), method: :delete, class: "btn btn-outline-danger btn-sm",
           form: { data: { turbo_confirm: "Delete this note?" } } %>
   <% end %>

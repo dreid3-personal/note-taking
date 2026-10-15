@@ -26,7 +26,7 @@ module Authorization
     # - :view    view it, or a folder's contents;
     # - :edit    edit a note, or create a note or folder inside a folder;
     # - :rename  rename a folder (edit access, but never a team folder);
-    # - :author  share, move or delete it (its author only, and never a team folder).
+    # - :author  share or delete it (its author only, and never a team folder).
     #
     # Nothing is allowed without a current user.
     def allowed_to?(action, item)

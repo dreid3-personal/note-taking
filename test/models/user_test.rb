@@ -36,4 +36,21 @@ class UserTest < ActiveSupport::TestCase
       User.insert_all!([ { name: "Shouty Alice", email: "ALICE@EXAMPLE.COM" } ])
     end
   end
+
+  test "a name can be up to 100 characters" do
+    assert User.new(name: "a" * 100, email: "long@example.com").valid?
+
+    user = User.new(name: "a" * 101, email: "long@example.com")
+    assert_not user.valid?
+    assert_includes user.errors[:name], "is too long (maximum is 100 characters)"
+  end
+
+  test "an email can be up to 254 characters" do
+    domain = "@example.com"
+    assert User.new(name: "Long", email: "a" * (254 - domain.length) + domain).valid?
+
+    user = User.new(name: "Long", email: "a" * (255 - domain.length) + domain)
+    assert_not user.valid?
+    assert_includes user.errors[:email], "is too long (maximum is 254 characters)"
+  end
 end

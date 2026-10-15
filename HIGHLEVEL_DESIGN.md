@@ -19,6 +19,7 @@ everyone.
 - Trash or undo for deleted items.
 - Deployment; the app runs locally only.
 - Passwords or real authentication.
+- Moving notes and folders. An item stays in the folder it was created in.
 
 ## Data model
 
@@ -33,6 +34,24 @@ shares          id, folder_id (nullable), note_id (nullable),
 ```
 
 All tables also have the standard `created_at` / `updated_at` timestamps.
+
+### Length limits
+
+| Field | Max characters |
+|---|---|
+| `users.name` | 100 |
+| `users.email` | 254 |
+| `teams.name` | 100 (a team folder takes its team's name, so it matches `folders.name`) |
+| `folders.name` | 100 |
+| `notes.title` | 200 |
+| `notes.body` | 100,000 |
+
+Each limit is a model validation with a friendly error, such as "is too long (maximum is 200
+characters)"; the body's error also says how long the body is. The form field has a matching
+`maxlength`. There is no database constraint. A note body's `
+` line breaks, which browsers
+submit, are saved as `
+`, so the textarea's `maxlength` and the validation count the same way.
 
 "Item" below means a note or a folder.
 
@@ -50,7 +69,9 @@ All tables also have the standard `created_at` / `updated_at` timestamps.
 
 - A folder sits inside another folder (`parent_id`) or at the top level (`parent_id` is `NULL`).
 - A note sits inside a folder (`folder_id`) or at the top level (`folder_id` is `NULL`).
-- A folder can't be moved inside itself or one of its own subfolders.
+- Moving isn't supported yet: an item stays where it was created, and the edit forms ignore
+  `folder_id` and `parent_id`. The `Folder` model still refuses a `parent_id` that would put a
+  folder inside itself or one of its own subfolders.
 - A folder can only be deleted when it's empty. With no trash, this prevents deleting a whole tree,
   including other people's notes, by accident.
 
@@ -130,7 +151,7 @@ Folders are rarely nested more than a few levels deep, so the ancestor check can
 | View an item, or a folder's contents | Anyone with `view` access |
 | Edit a note's title and body; rename a folder | Anyone with `edit` access |
 | Create a note or folder inside a folder | Anyone with `edit` access to that folder |
-| Move an item | Its author, into a folder where they have `edit` access |
+| Move an item | Not supported yet (see "Non-goals") |
 | Change sharing (`everyone_access`, shares) | Only the author |
 | Delete an item | Only the author (folders only when empty) |
 

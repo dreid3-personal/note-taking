@@ -29,8 +29,8 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "a[href=?]", edit_folder_path(folders(:alice_folder)), "Rename"
     assert_select "a[href=?]", sharing_folder_path(folders(:alice_folder)), "Share"
-    assert_select "a[href=?]", move_folder_path(folders(:alice_folder)), "Move"
     assert_select "form[action=?][data-turbo-confirm] button", folder_path(folders(:alice_folder)), "Delete"
+    assert_no_buttons "Move"
     assert_select "a[href=?]", new_folder_path(parent_id: folders(:alice_folder)), "+ New folder"
     assert_select "a[href=?]", new_note_path(folder_id: folders(:alice_folder)), "+ New note"
   end
@@ -40,10 +40,10 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
     get folder_path(folders(:alice_folder))
 
     assert_response :success
-    assert_no_buttons "Rename", "Share", "Move", "Delete", "+ New folder", "+ New note"
+    assert_no_buttons "Rename", "Share", "Delete", "+ New folder", "+ New note"
   end
 
-  test "show gives an editor who isn't the author Rename and New, but not Share, Move or Delete" do
+  test "show gives an editor who isn't the author Rename and New, but not Share or Delete" do
     folder = alice_folder_in_engineering
     switch_to users(:bob)
     get folder_path(folder)
@@ -51,16 +51,16 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", "Rename"
     assert_select "a", "+ New folder"
     assert_select "a", "+ New note"
-    assert_no_buttons "Share", "Move", "Delete"
+    assert_no_buttons "Share", "Delete"
   end
 
-  test "show gives a team folder no Rename, Share, Move or Delete, even for its creator" do
+  test "show gives a team folder no Rename, Share or Delete, even for its creator" do
     switch_to users(:alice)
     get folder_path(folders(:engineering))
 
     assert_select "a", "+ New folder"
     assert_select "a", "+ New note"
-    assert_no_buttons "Rename", "Share", "Move", "Delete"
+    assert_no_buttons "Rename", "Share", "Delete"
   end
 
   test "show is a 404 without access, and for a folder that doesn't exist" do
@@ -242,6 +242,26 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Bob's name", folders(:engineering) ], [ folder.reload.name, folder.parent ]
   end
 
+  test "the author can't move a folder with the rename form either" do
+    folder = folders(:alice_subfolder)
+    switch_to users(:alice)
+
+    patch folder_path(folder), params: { folder: { name: "Still nested", parent_id: "" } }
+
+    assert_redirected_to folder
+    assert_equal [ "Still nested", folders(:alice_folder) ], [ folder.reload.name, folder.parent ]
+  end
+
+  test "moving isn't supported: there is no move page" do
+    switch_to users(:alice)
+
+    get "/folders/#{folders(:alice_subfolder).id}/move"
+    assert_response :not_found
+    patch "/folders/#{folders(:alice_subfolder).id}/move", params: { folder: { parent_id: "" } }
+    assert_response :not_found
+    assert_equal folders(:alice_folder), folders(:alice_subfolder).reload.parent
+  end
+
   test "rename with a blank name shows the error and changes nothing" do
     switch_to users(:alice)
     patch folder_path(folders(:alice_folder)), params: { folder: { name: "" } }
@@ -366,5 +386,15 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
       delete folder_path(folders(:empty_folder))
     end
     assert_asked_to_pick_user
+  end
+
+  test "rename with an over-long name shows the error, and the field has a maxlength" do
+    switch_to users(:alice)
+    patch folder_path(folders(:alice_folder)), params: { folder: { name: "a" * 101 } }
+
+    assert_response :unprocessable_entity
+    assert_select "input.is-invalid ~ .invalid-feedback", "Name is too long (maximum is 100 characters)"
+    assert_select "input[name='folder[name]'][maxlength='100']"
+    assert_equal "Alice folder", folders(:alice_folder).reload.name
   end
 end

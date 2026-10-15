@@ -9,7 +9,6 @@
   <% end %>
   <% if allowed_to?(:author, @folder) %>
     <%= link_to "Share", sharing_folder_path(@folder), class: "btn btn-outline-secondary btn-sm" %>
-    <%= link_to "Move", move_folder_path(@folder), class: "btn btn-outline-secondary btn-sm" %>
     <%= button_to "Delete", folder_path(@folder), method: :delete, class: "btn btn-outline-danger btn-sm",
           form: { data: { turbo_confirm: "Delete this folder?" } } %>
   <% end %>

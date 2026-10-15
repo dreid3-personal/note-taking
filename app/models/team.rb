@@ -6,7 +6,10 @@ class Team < ApplicationRecord
 
   normalizes :name, with: ->(name) { name.strip }
 
-  validates :name, presence: true, uniqueness: { case_sensitive: false }
+  # The team folder takes the team's name, so this matches Folder::NAME_MAX_LENGTH.
+  NAME_MAX_LENGTH = 100
+
+  validates :name, presence: true, length: { maximum: NAME_MAX_LENGTH }, uniqueness: { case_sensitive: false }
 
   after_update :rename_folder, if: :saved_change_to_name?
 

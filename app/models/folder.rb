@@ -13,7 +13,9 @@ class Folder < ApplicationRecord
 
   normalizes :name, with: ->(name) { name.strip }
 
-  validates :name, presence: true
+  NAME_MAX_LENGTH = 100
+
+  validates :name, presence: true, length: { maximum: NAME_MAX_LENGTH }
   validate :not_inside_itself, if: :parent_id_changed?
   validate :team_folder_stays_put, if: :team_folder?
 

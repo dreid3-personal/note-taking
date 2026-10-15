@@ -15,18 +15,15 @@ Rails.application.routes.draw do
     resources :memberships, only: [ :create, :destroy ]
   end
 
-  # Notes and folders share the move and sharing pages. Each GET shows the page and the PATCH
-  # submits it. All the routes are defined here up front; their actions are added as they are built.
-  concern :movable_and_shareable do
+  # Notes and folders share the sharing page. The GET shows the page and the PATCH submits it.
+  concern :shareable do
     member do
-      get :move
-      patch :move, action: :update_move
       get :sharing
       patch :sharing, action: :update_sharing
     end
   end
 
-  resources :notes, only: [ :show, :new, :create, :edit, :update, :destroy ], concerns: :movable_and_shareable
-  resources :folders, only: [ :show, :new, :create, :edit, :update, :destroy ], concerns: :movable_and_shareable
+  resources :notes, only: [ :show, :new, :create, :edit, :update, :destroy ], concerns: :shareable
+  resources :folders, only: [ :show, :new, :create, :edit, :update, :destroy ], concerns: :shareable
   resources :shares, only: [ :create, :update, :destroy ]
 end
