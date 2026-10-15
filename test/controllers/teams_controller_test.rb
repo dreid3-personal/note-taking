@@ -101,6 +101,7 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_select ".invalid-feedback", "Name has already been taken"
     assert_select "h1", "Rename Engineering"
+    assert_select "input.is-invalid[name='team[name]'][value=?]", " design "
     assert_equal "Engineering", teams(:engineering).reload.name
     assert_equal "Engineering", folders(:engineering).reload.name
   end

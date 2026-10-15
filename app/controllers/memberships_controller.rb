@@ -11,6 +11,9 @@ class MembershipsController < ApplicationController
     else
       redirect_to @team, alert: membership.errors.full_messages.to_sentence, status: :see_other
     end
+  rescue ActiveRecord::RecordNotUnique
+    # Two quick submits can both pass the uniqueness validation; the unique index stops the second.
+    redirect_to @team, alert: "User is already a member of this team", status: :see_other
   end
 
   def destroy

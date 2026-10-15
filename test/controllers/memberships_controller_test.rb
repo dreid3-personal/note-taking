@@ -37,6 +37,23 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert-danger", "User must exist"
   end
 
+  test "create when the unique index catches a duplicate the validation missed, as in a double submit" do
+    team = teams(:engineering)
+    new_membership = Membership.method(:new)
+    Membership.define_singleton_method(:new) do |*args, **options, &block|
+      new_membership.call(*args, **options, &block).tap { |membership| def membership.valid?(*) = true }
+    end
+
+    assert_no_difference "Membership.count" do
+      post team_memberships_path(team), params: { user_id: users(:alice).id }
+    end
+    assert_redirected_to team_path(team)
+    follow_redirect!
+    assert_select ".alert-danger", "User is already a member of this team"
+  ensure
+    Membership.singleton_class.remove_method(:new)
+  end
+
   test "destroy removes a member" do
     team = teams(:engineering)
 
@@ -66,6 +83,10 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference "Membership.count" do
       post team_memberships_path(team), params: { user_id: users(:carol).id }
+    end
+    assert_redirected_to root_path
+
+    assert_no_difference "Membership.count" do
       delete team_membership_path(team, memberships(:bob_engineering))
     end
     assert_redirected_to root_path
