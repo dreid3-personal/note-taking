@@ -14,6 +14,10 @@
 #
 # A resolver loads the user's teams and shares once and remembers each folder's access, so make a
 # new one for each request: changes made after the first check aren't seen.
+#
+# Only saved values count. An item's unsaved changes (say, everyone_access set from params, or a
+# folder_id moved into a folder the user can edit) never grant access, so a controller can check
+# access after assigning attributes without being fooled by them.
 class AccessResolver
   # Access that an item gets from a folder above it: the grantee (a User, a Team, or :everyone)
   # has `level` through `folder`.
@@ -29,7 +33,7 @@ class AccessResolver
 
   def access_to(item)
     case item
-    when Note then AccessLevel.highest([ own_access(item), folder_access(item.folder_id) ])
+    when Note then AccessLevel.highest([ own_access(item), folder_access(item.folder_id_in_database) ])
     when Folder then folder_access(item.id, item)
     else raise ArgumentError, "expected a Note or Folder, got #{item.class}"
     end
@@ -43,12 +47,13 @@ class AccessResolver
     access_to(item).edit?
   end
 
-  # Who gets access to the item from the folders above it, nearest folder first: each folder's
-  # author (or, for a team folder, its team), everyone_access, and shares. Each grantee is listed once,
-  # at the highest level they inherit (from the nearest folder that gives it). The item's own
-  # author and sharing settings are not included. Used by the sharing page.
+  # Who gets access to the item from the folders above it: each folder's author (or, for a team
+  # folder, its team), everyone_access, and shares. Each grantee is listed once, at the highest
+  # level they inherit, from the nearest folder that gives that level; the list is ordered by that
+  # folder, nearest first. The item's own author and sharing settings are not included. Used by
+  # the sharing page. Like access_to, it follows the saved folder_id or parent_id.
   def self.inherited_grants(item)
-    folders = item.is_a?(Note) ? [ item.folder, *item.folder&.ancestors ].compact : item.ancestors
+    folders = saved_ancestors(item)
     shares = Share.where(folder_id: folders.map(&:id)).includes(:user, :team).group_by(&:folder_id)
 
     grants = folders.flat_map do |folder|
@@ -59,18 +64,34 @@ class AccessResolver
       ].compact
     end
 
-    grants.group_by(&:grantee).values.map do |same_grantee|
-      highest = AccessLevel.highest(same_grantee.map(&:level))
-      same_grantee.find { |grant| grant.level == highest }
+    highest = grants.group_by(&:grantee).values.map do |same_grantee|
+      level = AccessLevel.highest(same_grantee.map(&:level))
+      same_grantee.find { |grant| grant.level == level }
     end
+    # Keep them in their original order: nearest folder first.
+    grants.select { |grant| highest.include?(grant) }
+      .reject { |grant| grant.grantee.is_a?(User) && grant.grantee.id == item.author_id_in_database }
   end
+
+  # The folders above the item, nearest first, freshly loaded by their saved parent ids.
+  def self.saved_ancestors(item)
+    parent_id = item.is_a?(Note) ? item.folder_id_in_database : item.parent_id_in_database
+    folders = []
+    while parent_id
+      folder = Folder.includes(:author, :team).find(parent_id)
+      folders << folder
+      parent_id = folder.parent_id
+    end
+    folders
+  end
+  private_class_method :saved_ancestors
 
   private
     attr_reader :user
 
     # Access from the item itself, ignoring the folders above it.
     def own_access(item)
-      levels = [ item.everyone_access, *shared_levels[[ item.class.name, item.id ]] ]
+      levels = [ item.everyone_access_in_database, *shared_levels[[ item.class.name, item.id ]] ]
       levels << AccessLevel::EDIT if edits_as_author_or_member?(item)
       AccessLevel.highest(levels)
     end
@@ -79,9 +100,9 @@ class AccessResolver
     # team, and loses access on leaving it like anyone else.
     def edits_as_author_or_member?(item)
       if item.is_a?(Folder) && item.team_folder?
-        team_ids.include?(item.team_id)
+        team_ids.include?(item.team_id_in_database)
       else
-        item.author_id == user.id
+        item.author_id_in_database == user.id
       end
     end
 
@@ -91,7 +112,7 @@ class AccessResolver
 
       @folder_access.fetch(folder_id) do
         folder ||= find_folder(folder_id)
-        @folder_access[folder_id] = AccessLevel.highest([ own_access(folder), folder_access(folder.parent_id) ])
+        @folder_access[folder_id] = AccessLevel.highest([ own_access(folder), folder_access(folder.parent_id_in_database) ])
       end
     end
 

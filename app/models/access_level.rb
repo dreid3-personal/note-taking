@@ -35,8 +35,15 @@ class AccessLevel
     levels.map { |level| self[level] }.max || NONE
   end
 
+  # Compares with another level or a level name; anything else, including an unknown name, isn't
+  # comparable (nil), so == is false rather than raising.
   def <=>(other)
-    rank <=> AccessLevel[other].rank if other.is_a?(AccessLevel) || other.is_a?(String) || other.is_a?(Symbol)
+    other_rank =
+      case other
+      when AccessLevel then other.rank
+      when String, Symbol then NAMES.index(other.to_s)
+      end
+    rank <=> other_rank if other_rank
   end
 
   def none?

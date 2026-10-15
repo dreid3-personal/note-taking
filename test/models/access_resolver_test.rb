@@ -251,19 +251,86 @@ class AccessResolverTest < ActiveSupport::TestCase
     assert_no_queries { assert resolver.can_view?(deep) }
   end
 
+  # Unsaved changes
+
+  test "unsaved changes to an item don't grant access" do
+    note = notes(:alice_private)
+    note.everyone_access = :edit
+    assert_access :none, users(:dave), note
+
+    note.author = users(:dave)
+    assert_access :none, users(:dave), note
+  end
+
+  test "moving a note into an open folder grants nothing until it is saved" do
+    Share.create!(folder: folders(:alice_folder), user: users(:dave), access: :edit)
+    note = notes(:alice_private)
+    note.folder = folders(:alice_folder)
+
+    assert_access :none, users(:dave), note
+    note.save!
+    assert_access :edit, users(:dave), note
+  end
+
+  test "moving a folder into an open folder grants nothing until it is saved" do
+    Share.create!(folder: folders(:alice_folder), user: users(:dave), access: :edit)
+    folder = folders(:empty_folder)
+    folder.parent = folders(:alice_folder)
+
+    assert_access :none, users(:dave), folder
+    assert_empty AccessResolver.inherited_grants(folder)
+  end
+
+  test "an unsaved item gives no access, even to its author" do
+    assert_access :none, users(:alice), Note.new(title: "Draft", author: users(:alice))
+    assert_access :none, users(:alice), Folder.new(name: "Draft", author: users(:alice))
+  end
+
+  # No leaks sideways or upward
+
+  test "a share on a sibling folder doesn't leak" do
+    Share.create!(folder: folders(:empty_folder), user: users(:dave), access: :edit)
+
+    assert_access :none, users(:dave), folders(:alice_folder)
+    assert_access :none, users(:dave), folders(:alice_subfolder)
+    assert_access :none, users(:dave), notes(:alice_nested)
+  end
+
+  test "a share on a note doesn't leak to its folder or its sibling notes and folders" do
+    sibling = Note.create!(title: "Sibling", author: users(:alice), folder: folders(:alice_folder))
+    Share.create!(note: notes(:alice_nested), user: users(:dave), access: :edit)
+
+    assert_access :edit, users(:dave), notes(:alice_nested)
+    assert_access :none, users(:dave), sibling
+    assert_access :none, users(:dave), folders(:alice_folder)
+    assert_access :none, users(:dave), folders(:alice_subfolder)
+  end
+
+  test "a share on a child folder doesn't leak to notes beside it" do
+    Share.create!(folder: folders(:alice_subfolder), user: users(:dave), access: :edit)
+
+    assert_access :none, users(:dave), notes(:alice_nested)
+  end
+
   # Grants inherited from parent folders, for the sharing page
 
   test "lists the grants a note inherits from its folder" do
-    grants = AccessResolver.inherited_grants(notes(:alice_nested))
+    note = Note.create!(title: "Bob's", author: users(:bob), folder: folders(:alice_folder))
 
     assert_equal [
       [ users(:alice), "edit", folders(:alice_folder) ],
       [ teams(:design), "view", folders(:alice_folder) ]
-    ], summarize(grants)
+    ], summarize(AccessResolver.inherited_grants(note))
+  end
+
+  test "leaves out the item's own author" do
+    assert_equal [
+      [ teams(:design), "view", folders(:alice_folder) ]
+    ], summarize(AccessResolver.inherited_grants(notes(:alice_nested)))
   end
 
   test "lists grants from every folder above, keeping each grantee's highest level" do
-    deep = deep_note
+    note = Note.create!(title: "Bob's", author: users(:bob), folder: folders(:alice_subfolder))
     folders(:alice_folder).update!(everyone_access: :view)
     Share.create!(folder: folders(:alice_subfolder), team: teams(:design), access: :edit)
     Share.create!(folder: folders(:alice_folder), user: users(:dave), access: :view)
@@ -273,20 +340,39 @@ class AccessResolverTest < ActiveSupport::TestCase
       [ teams(:design), "edit", folders(:alice_subfolder) ],
       [ :everyone, "view", folders(:alice_folder) ],
       [ users(:dave), "view", folders(:alice_folder) ]
-    ], summarize(AccessResolver.inherited_grants(deep))
+    ], summarize(AccessResolver.inherited_grants(note))
+  end
+
+  test "orders grants by the folder their highest level comes from, nearest first" do
+    note = Note.create!(title: "Bob's", author: users(:bob), folder: folders(:alice_subfolder))
+    Share.create!(folder: folders(:alice_subfolder), user: users(:dave), access: :view)
+    Share.create!(folder: folders(:alice_subfolder), user: users(:carol), access: :edit)
+    Share.create!(folder: folders(:alice_folder), user: users(:dave), access: :edit)
+
+    assert_equal [
+      [ users(:alice), "edit", folders(:alice_subfolder) ],
+      [ users(:carol), "edit", folders(:alice_subfolder) ],
+      [ teams(:design), "view", folders(:alice_folder) ],
+      [ users(:dave), "edit", folders(:alice_folder) ]
+    ], summarize(AccessResolver.inherited_grants(note))
   end
 
   test "a folder inherits grants from its own parents, not itself" do
+    folder = Folder.create!(name: "Bob's", author: users(:bob), parent: folders(:alice_folder))
+    Share.create!(folder: folder, user: users(:dave), access: :edit)
+
     assert_equal [
       [ users(:alice), "edit", folders(:alice_folder) ],
       [ teams(:design), "view", folders(:alice_folder) ]
-    ], summarize(AccessResolver.inherited_grants(folders(:alice_subfolder)))
+    ], summarize(AccessResolver.inherited_grants(folder))
   end
 
   test "lists the team of a team folder, not the folder's author" do
+    note = Note.create!(title: "Bob's", author: users(:bob), folder: folders(:engineering))
+
     assert_equal [
       [ teams(:engineering), "edit", folders(:engineering) ]
-    ], summarize(AccessResolver.inherited_grants(notes(:eng_plan)))
+    ], summarize(AccessResolver.inherited_grants(note))
   end
 
   test "a top-level item inherits nothing, and its own shares aren't listed" do

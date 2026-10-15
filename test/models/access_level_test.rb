@@ -51,6 +51,9 @@ class AccessLevelTest < ActiveSupport::TestCase
     assert_equal AccessLevel::VIEW, "view"
     assert_operator AccessLevel::EDIT, :>, :view
     assert_not_equal AccessLevel::NONE, nil
+    assert_not_equal AccessLevel::VIEW, "owner"
+    assert_nil AccessLevel::VIEW <=> "owner"
+    assert_nil AccessLevel::VIEW <=> 1
   end
 
   test "converts to its name" do
