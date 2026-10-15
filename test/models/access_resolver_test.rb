@@ -357,6 +357,23 @@ class AccessResolverTest < ActiveSupport::TestCase
     ], summarize(AccessResolver.inherited_grants(note))
   end
 
+  # A folder's user and team shares sort in opposite orders in the (folder_id, user_id) and
+  # (folder_id, team_id) indexes, so this fails whichever index SQLite reads them through.
+  test "lists the shares from one folder in the order they were made" do
+    note = Note.create!(title: "Bob's", author: users(:bob), folder: folders(:alice_subfolder))
+    Share.create!(folder: folders(:alice_subfolder), user: users(:dave), access: :view)
+    Share.create!(folder: folders(:alice_subfolder), team: teams(:engineering), access: :view)
+    Share.create!(folder: folders(:alice_folder), user: users(:carol), access: :view)
+
+    assert_equal [
+      [ users(:alice), "edit", folders(:alice_subfolder) ],
+      [ users(:dave), "view", folders(:alice_subfolder) ],
+      [ teams(:engineering), "view", folders(:alice_subfolder) ],
+      [ teams(:design), "view", folders(:alice_folder) ],
+      [ users(:carol), "view", folders(:alice_folder) ]
+    ], summarize(AccessResolver.inherited_grants(note))
+  end
+
   test "a folder inherits grants from its own parents, not itself" do
     folder = Folder.create!(name: "Bob's", author: users(:bob), parent: folders(:alice_folder))
     Share.create!(folder: folder, user: users(:dave), access: :edit)

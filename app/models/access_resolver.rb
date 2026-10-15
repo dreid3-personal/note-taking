@@ -50,11 +50,13 @@ class AccessResolver
   # Who gets access to the item from the folders above it: each folder's author (or, for a team
   # folder, its team), everyone_access, and shares. Each grantee is listed once, at the highest
   # level they inherit, from the nearest folder that gives that level; the list is ordered by that
-  # folder, nearest first. The item's own author and sharing settings are not included. Used by
-  # the sharing page. Like access_to, it follows the saved folder_id or parent_id.
+  # folder, nearest first. Within one folder: its author or team, then everyone, then its shares
+  # in the order they were made. The item's own author and sharing settings are not included.
+  # Used by the sharing page. Like access_to, it follows the saved folder_id or parent_id.
   def self.inherited_grants(item)
     folders = saved_ancestors(item)
-    shares = Share.where(folder_id: folders.map(&:id)).includes(:user, :team).group_by(&:folder_id)
+    # Without an ORDER BY, SQLite returns shares in whichever index it reads them through.
+    shares = Share.where(folder_id: folders.map(&:id)).order(:id).includes(:user, :team).group_by(&:folder_id)
 
     grants = folders.flat_map do |folder|
       [
