@@ -190,10 +190,15 @@ class SharesControllerTest < ActionDispatch::IntegrationTest
       assert_not_found
     end
 
-    # The author gets the same 404 for an array: only a single id names an item.
+    # The author gets the same 404 for an array, or for both a note and a folder id, even though
+    # they wrote both: only a single id names an item.
     switch_to users(:alice)
-    post shares_path, params: { share: { note_id: [ hidden ], email: "dave@example.com", access: "edit" } }
-    assert_not_found
+    assert_no_difference -> { Share.count } do
+      post shares_path, params: { share: { note_id: [ hidden ], email: "dave@example.com", access: "edit" } }
+      assert_not_found
+      post shares_path, params: { share: { note_id: hidden, folder_id: folders(:alice_folder).id, email: "dave@example.com", access: "edit" } }
+      assert_not_found
+    end
   end
 
   # update

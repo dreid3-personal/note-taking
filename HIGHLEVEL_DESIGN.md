@@ -191,7 +191,6 @@ each can be unit tested on its own. Following Rails convention, plain Ruby class
 | `MarkdownRenderer` | Turns a Markdown string into sanitized HTML. | The Markdown gem |
 | `Team.create_with_folder` | Creates a team, its team folder, and the creator's membership in one transaction. | `Team`, `Folder`, `Membership` |
 | `Authorization` (controller concern) | `require_access!(item, :view)` or `(item, :edit)`, `(item, :rename)` for renaming a folder (edit access, never a team folder), and `require_author!(item)` for sharing, moving and deleting (never a team folder). Responds with a 404 or a redirect, as described in "Denied access"; a missing record gets the same 404. Views ask `allowed_to?(action, item)` to decide which buttons to show. | `AccessResolver` |
-
 | `Shareable` (controller concern) and `SharesController` | The sharing page for notes and folders (`sharing`, `update_sharing` for the Everyone setting), and adding, changing and removing shares. Every request checks `require_author!` on the item, loaded from the database (the share's own item, or the posted id). | `Authorization`, `AccessResolver.inherited_grants` |
 
 Controllers only load records, call `Authorization`, save, and render. Views only display what
