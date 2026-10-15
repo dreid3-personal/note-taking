@@ -1,4 +1,6 @@
 class FoldersController < ApplicationController
+  include Shareable
+
   before_action :require_current_user
   before_action :set_folder, only: %i[show edit update destroy]
   before_action -> { require_access!(@folder, :view) }, only: :show

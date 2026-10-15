@@ -150,13 +150,13 @@ Notes and folders share the same page: `GET /notes/:id/sharing` or `GET /folders
 Only the author can open it.
 
 ```
-Share "API spec"
+Share "API spec"                                       [Done]
 
 Everyone                      [No access ▾]           [Save]
 
 People and teams with access
-  Bob (bob@example.com)       [Can edit ▾]            [Remove]
-  👥 Engineering               [Can view ▾]            [Remove]
+  Bob (bob@example.com)       [Can edit ▾] [Save]     [Remove]
+  👥 Engineering               [Can view ▾] [Save]     [Remove]
 
 Add a person
   [email address        ]     [Can view ▾]            [Add]
@@ -171,7 +171,12 @@ Also has access through a parent folder:
 - Each row and form is its own small form that posts to `shares` (`POST /shares`,
   `PATCH /shares/:id`, `DELETE /shares/:id`). The Everyone form submits to `PATCH /notes/:id/sharing`
   or `PATCH /folders/:id/sharing`. This avoids writing any JavaScript.
-- Adding a person looks up the email. If no user has that email, it shows "No user with that email."
+- Adding a person looks up the email, trimmed and lowercased like a user's email. If no user has
+  that email, it shows "No user with that email." Adding someone who already has a share, or the
+  author themself, adds nothing and says why; an existing share's level is changed in its row.
+- Every form returns to the sharing page with a message. The author is the only one who can open
+  the page or use its forms, and a team folder can't be shared (see "Permissions" in
+  HIGHLEVEL_DESIGN.md).
 - The access dropdowns offer **Can view** and **Can edit**. The "Everyone" dropdown also offers
   **No access**.
 - The **"Also has access through a parent folder"** list is read-only. It explains access that this
