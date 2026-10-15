@@ -1,0 +1,22 @@
+<% content_for :title, @folder.name %>
+
+<%= render "breadcrumbs", breadcrumbs: @breadcrumbs %>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+  <h1 class="h3 mb-0 me-auto">📁 <%= @folder.name %></h1>
+  <% if allowed_to?(:rename, @folder) %>
+    <%= link_to "Rename", edit_folder_path(@folder), class: "btn btn-outline-secondary btn-sm" %>
+  <% end %>
+  <% if allowed_to?(:author, @folder) %>
+    <%= link_to "Share", sharing_folder_path(@folder), class: "btn btn-outline-secondary btn-sm" %>
+    <%= link_to "Move", move_folder_path(@folder), class: "btn btn-outline-secondary btn-sm" %>
+    <%= button_to "Delete", folder_path(@folder), method: :delete, class: "btn btn-outline-danger btn-sm",
+          form: { data: { turbo_confirm: "Delete this folder?" } } %>
+  <% end %>
+  <% if allowed_to?(:edit, @folder) %>
+    <%= link_to "+ New folder", new_folder_path(parent_id: @folder), class: "btn btn-outline-primary btn-sm" %>
+    <%= link_to "+ New note", new_note_path(folder_id: @folder), class: "btn btn-primary btn-sm" %>
+  <% end %>
+</div>
+
+<%= render "item_list", items: @items %>

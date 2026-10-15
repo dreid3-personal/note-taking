@@ -12,7 +12,25 @@
 # the app runs locally with a handful of users, and deciding access in Ruby keeps the rules in
 # AccessResolver. If that gets slow, move the ancestor walk into SQL (WITH RECURSIVE).
 class NotesHome
+  SECTIONS = { my_notes: "My notes", team_folders: "Team folders", shared_with_me: "Shared with me" }.freeze
+
   attr_reader :my_notes, :team_folders, :shared_with_me
+
+  # The section a top-level item belongs in. A team folder can only be opened through membership,
+  # so any listed one is the user's team's.
+  def self.section_for(item, user)
+    if item.is_a?(Folder) && item.team_folder? then :team_folders
+    elsif item.author_id == user.id then :my_notes
+    else :shared_with_me
+    end
+  end
+
+  # Folders first, then notes, each alphabetical. Folder pages list their contents the same way.
+  def self.sort(items)
+    items.sort_by do |item|
+      item.is_a?(Folder) ? [ 0, item.name.downcase, item.id ] : [ 1, item.title.downcase, item.id ]
+    end
+  end
 
   def initialize(user)
     folders = Folder.includes(:author).to_a
@@ -27,21 +45,10 @@ class NotesHome
       resolver.can_view?(item) && !open_folder_ids.include?(parent_id)
     end
 
-    # A team folder can only be opened through membership, so any listed one is the user's team's.
-    sections = items.sort_by { |item| sort_key(item) }.group_by do |item|
-      if item.is_a?(Folder) && item.team_folder? then :team_folders
-      elsif item.author_id == user.id then :my_notes
-      else :shared_with_me
-      end
-    end
+    sections = self.class.sort(items).group_by { |item| self.class.section_for(item, user) }
 
     @my_notes = sections.fetch(:my_notes, [])
     @team_folders = sections.fetch(:team_folders, [])
     @shared_with_me = sections.fetch(:shared_with_me, [])
   end
-
-  private
-    def sort_key(item)
-      item.is_a?(Folder) ? [ 0, item.name.downcase, item.id ] : [ 1, item.title.downcase, item.id ]
-    end
 end

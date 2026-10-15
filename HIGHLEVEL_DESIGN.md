@@ -146,6 +146,8 @@ Permissions are checked on the server for every request, not just by hiding butt
 - **Some access, but not enough** (for example, a viewer opening the edit page or submitting an
   edit): the server redirects to the item with "You don't have permission to do that." and nothing
   changes. The new item's author is whoever creates it, even inside someone else's folder.
+- **No current user picked:** pages that need one redirect to the Notes page, which asks the
+  visitor to pick a user.
 
 ### Concurrent edits
 
@@ -184,10 +186,11 @@ each can be unit tested on its own. Following Rails convention, plain Ruby class
 | `User`, `Team`, `Membership`, `Folder`, `Note`, `Share` | Associations, validations, normalization, and simple scopes. No permission logic. | Database |
 | `AccessLevel` | A value object for `none` < `view` < `edit`. Compares levels, picks the highest, and answers "does this level allow viewing / editing?" | Nothing |
 | `AccessResolver` | Works out a user's effective access to one item, following the rules in "Effective access" above: `access_to(item)` returns an `AccessLevel`, with `can_view?` / `can_edit?` shortcuts. `AccessResolver.inherited_grants(item)` lists who gets access from the folders above the item (grantee, level, source folder), for the sharing page's "Also has access through a parent folder". | The item, its parent folders, its shares, and the user's team ids |
-| `NotesHome` | Builds the Notes page's top level: the items in My notes, Team folders and Shared with me. | `AccessResolver` |
+| `NotesHome` | Builds the Notes page's top level: the items in My notes, Team folders and Shared with me. Also sorts item lists (folders first, each alphabetical) for folder pages. | `AccessResolver` |
+| `Breadcrumbs` | The trail above a note or folder page: the Notes page section the item is reached from, then the folders from there down that the user can open (see "Breadcrumbs" in UI_DESIGN.md). | `AccessResolver`, `NotesHome` |
 | `MarkdownRenderer` | Turns a Markdown string into sanitized HTML. | The Markdown gem |
 | `Team.create_with_folder` | Creates a team, its team folder, and the creator's membership in one transaction. | `Team`, `Folder`, `Membership` |
-| `Authorization` (controller concern) | `require_access!(item, :view)` or `(item, :edit)`, and `require_author!(item)`. Responds with a 404 or a redirect, as described in "Denied access". | `AccessResolver` |
+| `Authorization` (controller concern) | `require_access!(item, :view)` or `(item, :edit)`, `(item, :rename)` for renaming a folder (edit access, never a team folder), and `require_author!(item)` for sharing, moving and deleting (never a team folder). Responds with a 404 or a redirect, as described in "Denied access"; a missing record gets the same 404. Views ask `allowed_to?(action, item)` to decide which buttons to show. | `AccessResolver` |
 
 Controllers only load records, call `Authorization`, save, and render. Views only display what
 they're given.

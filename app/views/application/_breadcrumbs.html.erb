@@ -1,0 +1,9 @@
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><%= link_to "Notes", root_path %></li>
+    <li class="breadcrumb-item"><%= link_to NotesHome::SECTIONS.fetch(breadcrumbs.section), root_path(anchor: breadcrumbs.section.to_s.dasherize) %></li>
+    <% breadcrumbs.folders.each do |folder| %>
+      <li class="breadcrumb-item"><%= link_to folder.name, folder %></li>
+    <% end %>
+  </ol>
+</nav>

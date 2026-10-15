@@ -1,10 +1,21 @@
 <% content_for :title, "Notes" %>
 
-<h1 class="h3 mb-4">Notes</h1>
-
 <% if current_user %>
-  <p class="text-body-secondary">Notes are coming soon.</p>
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <h1 class="h3 mb-0 me-auto">Notes</h1>
+    <%= link_to "+ New folder", new_folder_path, class: "btn btn-outline-primary btn-sm" %>
+    <%= link_to "+ New note", new_note_path, class: "btn btn-primary btn-sm" %>
+  </div>
+
+  <% NotesHome::SECTIONS.each do |section, label| %>
+    <section id="<%= section.to_s.dasherize %>">
+      <h2 class="h5"><%= label %></h2>
+      <%= render "item_list", items: @home.public_send(section) %>
+    </section>
+  <% end %>
 <% else %>
+  <h1 class="h3 mb-4">Notes</h1>
+
   <p>Pick a user in the sidebar to get started.</p>
   <% if @no_users %>
     <p>There are no users yet. <%= link_to "Add one on the Users page", users_path %>.</p>

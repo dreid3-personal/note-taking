@@ -1,0 +1,5 @@
+<% content_for :title, "Rename folder" %>
+
+<h1 class="h3 mb-4">Rename "<%= @folder.name_in_database %>"</h1>
+
+<%= render "form", folder: @folder, submit_label: "Rename", cancel_path: @folder %>
