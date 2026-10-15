@@ -1,0 +1,12 @@
+<% content_for :title, "Notes" %>
+
+<h1 class="h3 mb-4">Notes</h1>
+
+<% if current_user %>
+  <p class="text-body-secondary">Notes are coming soon.</p>
+<% else %>
+  <p>Pick a user in the sidebar to get started.</p>
+  <% if @no_users %>
+    <p>There are no users yet. <%= link_to "Add one on the Users page", users_path %>.</p>
+  <% end %>
+<% end %>

@@ -18,12 +18,36 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <%= stylesheet_link_tag "bootstrap.min", "data-turbo-track": "reload" %>
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
   <body>
-    <%= yield %>
+    <nav class="sidebar d-flex flex-column p-3 bg-body-tertiary border-end">
+      <%= link_to "Note Taker", root_path, class: "fs-5 fw-semibold text-body text-decoration-none mb-3" %>
+
+      <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item"><%= sidebar_link "📄 Notes", root_path, :notes %></li>
+        <li class="nav-item"><%= sidebar_link "👤 Users", users_path, :users %></li>
+        <%# The Teams pages come in a later change, which turns this into a link. %>
+        <li class="nav-item"><span class="nav-link disabled">👥 Teams</span></li>
+      </ul>
+
+      <%= form_with url: current_user_path, method: :patch do |form| %>
+        <%= form.label :user_id, "You are:", class: "form-label small" %>
+        <%= form.select :user_id, user_switcher_options, { include_blank: "Pick a user", selected: current_user&.id },
+              class: "form-select form-select-sm", onchange: "this.form.requestSubmit()" %>
+      <% end %>
+    </nav>
+
+    <main class="content p-4">
+      <% flash.each do |type, message| %>
+        <div class="alert <%= type == "alert" ? "alert-danger" : "alert-success" %>" role="alert"><%= message %></div>
+      <% end %>
+
+      <%= yield %>
+    </main>
   </body>
 </html>
