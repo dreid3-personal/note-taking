@@ -30,7 +30,7 @@ class NotesController < ApplicationController
 
   # Whoever creates a note is its author, even inside someone else's folder.
   def create
-    @note = Note.new(title: note_params[:title], body: note_params[:body], folder: @folder, author: current_user)
+    @note = Note.new(note_params.slice(:title, :body).merge(folder: @folder, author: current_user))
 
     if @note.save
       redirect_to @note, notice: "Note created."
@@ -44,9 +44,12 @@ class NotesController < ApplicationController
 
   # The form sends back the lock_version it was opened with, so saving over someone else's newer
   # edit fails instead of overwriting it. The form then keeps what was typed, along with the old
-  # lock_version, so submitting it again fails too.
+  # lock_version, so submitting it again fails too. Without a lock_version there is nothing to
+  # check against, so the request is refused as a bad request.
   def update
-    if @note.update(title: note_params[:title], body: note_params[:body], lock_version: note_params[:lock_version])
+    lock_version = note_params.require(:lock_version)
+
+    if @note.update(note_params.slice(:title, :body).merge(lock_version: lock_version))
       redirect_to @note, notice: "Note saved."
     else
       render :edit, status: :unprocessable_entity
@@ -69,7 +72,8 @@ class NotesController < ApplicationController
 
     # The folder comes from ?folder_id= on the new page and note[folder_id] on create. Anything
     # but a single id, such as an array, is treated as an id that doesn't exist: a 404, whether or
-    # not the folder is there.
+    # not the folder is there. (require_access! would also 404 on the Array that Folder.find
+    # returns for one, but the check belongs here, where the param is read.)
     def set_folder
       folder_id = action_name == "new" ? params[:folder_id] : note_params && params[:note][:folder_id]
       raise ActiveRecord::RecordNotFound unless folder_id.nil? || folder_id.is_a?(String)

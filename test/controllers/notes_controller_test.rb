@@ -325,6 +325,35 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Eng plan", "Alice's change" ], [ note.reload.title, note.body ]
   end
 
+  test "update without a lock_version is a bad request and changes nothing" do
+    note = notes(:alice_private)
+    switch_to users(:alice)
+
+    [ {}, { lock_version: "" }, { lock_version: [ note.lock_version ] } ].each do |lock|
+      patch note_path(note), params: { note: { title: "Overwritten", body: "Overwritten", **lock } }
+      assert_response :bad_request
+    end
+    assert_equal [ "Alice private", "# Heading" ], [ note.reload.title, note.body ]
+  end
+
+  test "update changes only what the form sends" do
+    note = notes(:alice_private)
+    switch_to users(:alice)
+    patch note_path(note), params: { note: { body: "Body only", author_id: users(:dave).id, everyone_access: "edit", lock_version: note.lock_version } }
+
+    assert_redirected_to note
+    assert_equal [ "Alice private", "Body only", users(:alice), "none" ], [ note.reload.title, note.body, note.author, note.everyone_access ]
+  end
+
+  test "create ignores an author or Everyone setting in the params, and works without a body" do
+    switch_to users(:dave)
+    post notes_path, params: { note: { title: "Dave note", author_id: users(:alice).id, everyone_access: "edit", folder_id: "" } }
+
+    note = Note.last
+    assert_redirected_to note
+    assert_equal [ users(:dave), "none", "" ], [ note.author, note.everyone_access, note.body ]
+  end
+
   test "update with a blank title shows the error and changes nothing" do
     note = notes(:alice_private)
     switch_to users(:alice)
