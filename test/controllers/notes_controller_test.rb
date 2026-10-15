@@ -167,4 +167,279 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
 
     assert_asked_to_pick_user
   end
+
+  # new and create
+
+  test "new and create make a top-level note, authored by the current user" do
+    switch_to users(:dave)
+    get new_note_path
+    assert_response :success
+    assert_select "input[name='note[folder_id]']:not([value])"
+    assert_select "textarea[name='note[body]']"
+    assert_select "input[name='note[lock_version]']", 0
+
+    assert_difference "Note.count", 1 do
+      post notes_path, params: { note: { title: " Dave note ", body: "# Hi", folder_id: "" } }
+    end
+
+    note = Note.last
+    assert_redirected_to note
+    assert_equal "Note created.", flash[:notice]
+    assert_equal [ "Dave note", "# Hi", users(:dave), nil ], [ note.title, note.body, note.author, note.folder ]
+  end
+
+  test "an editor creates a note inside someone else's folder and is its author" do
+    switch_to users(:bob)
+    get new_note_path(folder_id: folders(:engineering))
+    assert_response :success
+    assert_select "h1", "New note in Engineering"
+    assert_select "input[name='note[folder_id]'][value=?]", folders(:engineering).id.to_s
+
+    assert_difference "Note.count", 1 do
+      post notes_path, params: { note: { title: "Bob eng note", body: "", folder_id: folders(:engineering).id } }
+    end
+
+    note = Note.last
+    assert_redirected_to note
+    assert_equal [ users(:bob), folders(:engineering) ], [ note.author, note.folder ]
+  end
+
+  test "a viewer can't create a note inside the folder" do
+    switch_to users(:carol)
+    get new_note_path(folder_id: folders(:alice_folder))
+    assert_not_allowed folders(:alice_folder)
+
+    assert_no_difference "Note.count" do
+      post notes_path, params: { note: { title: "Carol's", folder_id: folders(:alice_folder).id } }
+    end
+    assert_not_allowed folders(:alice_folder)
+  end
+
+  test "creating a note inside a folder without access is a 404" do
+    switch_to users(:dave)
+    get new_note_path(folder_id: folders(:alice_folder))
+    assert_not_found
+
+    assert_no_difference "Note.count" do
+      post notes_path, params: { note: { title: "Dave's", folder_id: folders(:alice_folder).id } }
+    end
+    assert_not_found
+  end
+
+  test "a folder_id that isn't a single id is a 404, the same for a hidden folder and a missing one" do
+    switch_to users(:dave)
+
+    get new_note_path(folder_id: [ folders(:alice_folder).id ])
+    assert_not_found
+    hidden_body = response.body
+    get new_note_path(folder_id: [ 0 ])
+    assert_not_found
+    assert_equal hidden_body, response.body
+
+    assert_no_difference "Note.count" do
+      post notes_path, params: { note: { title: "Dave's", folder_id: [ folders(:alice_folder).id ] } }
+      assert_not_found
+      post notes_path, params: { note: { title: "Dave's", folder_id: [ 0 ] } }
+      assert_not_found
+      post notes_path, params: { note: { title: "Dave's", folder_id: { id: folders(:alice_folder).id } } }
+      assert_not_found
+    end
+  end
+
+  test "create without a note hash is a bad request" do
+    switch_to users(:dave)
+
+    assert_no_difference "Note.count" do
+      post notes_path, params: { note: "x" }
+    end
+    assert_response :bad_request
+  end
+
+  test "create with a blank title shows the error and keeps what was typed" do
+    switch_to users(:alice)
+
+    assert_no_difference "Note.count" do
+      post notes_path, params: { note: { title: " ", body: "Draft", folder_id: folders(:alice_folder).id } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "input.is-invalid ~ .invalid-feedback", "Title can't be blank"
+    assert_select "textarea[name='note[body]']", "Draft"
+    assert_select "input[name='note[folder_id]'][value=?]", folders(:alice_folder).id.to_s
+  end
+
+  test "new and create ask to pick a user when there's no current user" do
+    get new_note_path
+    assert_asked_to_pick_user
+
+    assert_no_difference "Note.count" do
+      post notes_path, params: { note: { title: "Nobody's", folder_id: "" } }
+    end
+    assert_asked_to_pick_user
+  end
+
+  # edit and update
+
+  test "the author edits a note" do
+    note = notes(:alice_private)
+    switch_to users(:alice)
+    get edit_note_path(note)
+    assert_response :success
+    assert_select "input[name='note[title]'][value=?]", "Alice private"
+    assert_select "textarea[name='note[body]']", "# Heading"
+    assert_select "input[type=hidden][name='note[lock_version]'][value=?]", note.lock_version.to_s
+    assert_select "input[name='note[folder_id]']", 0
+
+    patch note_path(note), params: { note: { title: "Renamed", body: "New body", lock_version: note.lock_version } }
+
+    assert_redirected_to note
+    assert_equal "Note saved.", flash[:notice]
+    assert_equal [ "Renamed", "New body" ], [ note.reload.title, note.body ]
+  end
+
+  test "an editor who isn't the author edits a note, but can't move it with the same form" do
+    note = notes(:eng_plan)
+    switch_to users(:bob)
+    get edit_note_path(note)
+    assert_response :success
+
+    patch note_path(note), params: { note: { title: "Eng plan", body: "Bob's plan", folder_id: "", lock_version: note.lock_version } }
+
+    assert_redirected_to note
+    assert_equal [ "Bob's plan", folders(:engineering), users(:alice) ], [ note.reload.body, note.folder, note.author ]
+  end
+
+  test "saving over someone else's newer edit shows a message, keeps what was typed and saves nothing" do
+    note = notes(:eng_plan)
+    opened_version = note.lock_version
+    note.update!(body: "Alice's change")
+    switch_to users(:bob)
+
+    patch note_path(note), params: { note: { title: "Bob's title", body: "Bob's change", lock_version: opened_version } }
+
+    assert_response :conflict
+    assert_select ".alert", "This note was changed by someone else."
+    assert_select "input[name='note[title]'][value=?]", "Bob's title"
+    assert_select "textarea[name='note[body]']", "Bob's change"
+    assert_select "input[name='note[lock_version]'][value=?]", opened_version.to_s
+    assert_equal [ "Eng plan", "Alice's change" ], [ note.reload.title, note.body ]
+  end
+
+  test "update with a blank title shows the error and changes nothing" do
+    note = notes(:alice_private)
+    switch_to users(:alice)
+    patch note_path(note), params: { note: { title: "", body: "Changed", lock_version: note.lock_version } }
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "Edit \"Alice private\""
+    assert_select ".invalid-feedback", "Title can't be blank"
+    assert_equal [ "Alice private", "# Heading" ], [ note.reload.title, note.body ]
+  end
+
+  test "a viewer can't edit" do
+    note = notes(:alice_private)
+    switch_to users(:carol)
+    get edit_note_path(note)
+    assert_not_allowed note
+
+    patch note_path(note), params: { note: { title: "Carol's now", lock_version: note.lock_version } }
+    assert_not_allowed note
+    assert_equal "Alice private", note.reload.title
+  end
+
+  test "editing without access is a 404" do
+    note = notes(:alice_private)
+    switch_to users(:dave)
+    get edit_note_path(note)
+    assert_not_found
+
+    patch note_path(note), params: { note: { title: "Dave's now", lock_version: note.lock_version } }
+    assert_not_found
+    assert_equal "Alice private", note.reload.title
+  end
+
+  test "losing access while the edit page is open refuses the save" do
+    note = notes(:eng_plan)
+    switch_to users(:bob)
+    get edit_note_path(note)
+    assert_response :success
+    memberships(:bob_engineering).destroy
+
+    patch note_path(note), params: { note: { title: "Eng plan", body: "Bob's change", lock_version: note.lock_version } }
+    assert_not_found
+    assert_equal "The plan.", note.reload.body
+  end
+
+  test "edit and update ask to pick a user when there's no current user" do
+    note = notes(:alice_private)
+    get edit_note_path(note)
+    assert_asked_to_pick_user
+
+    patch note_path(note), params: { note: { title: "Nobody's", lock_version: note.lock_version } }
+    assert_asked_to_pick_user
+    assert_equal "Alice private", note.reload.title
+  end
+
+  # destroy
+
+  test "the author deletes a note and goes back to its folder, or to Notes" do
+    switch_to users(:alice)
+
+    assert_difference "Note.count", -1 do
+      delete note_path(notes(:alice_nested))
+    end
+    assert_redirected_to folders(:alice_folder)
+    assert_response :see_other
+    assert_equal "Note deleted.", flash[:notice]
+
+    assert_difference [ "Note.count", "Share.count" ], -1 do
+      delete note_path(notes(:alice_private))
+    end
+    assert_redirected_to root_path
+  end
+
+  test "an author who can't see the folder anymore goes back to Notes" do
+    note = Note.create!(title: "Bob eng note", author: users(:bob), folder: folders(:engineering))
+    memberships(:bob_engineering).destroy
+    switch_to users(:bob)
+
+    assert_difference "Note.count", -1 do
+      delete note_path(note)
+    end
+    assert_redirected_to root_path
+  end
+
+  test "an editor who isn't the author can't delete" do
+    switch_to users(:bob)
+
+    assert_no_difference "Note.count" do
+      delete note_path(notes(:eng_plan))
+    end
+    assert_not_allowed notes(:eng_plan)
+  end
+
+  test "a viewer can't delete" do
+    switch_to users(:carol)
+
+    assert_no_difference "Note.count" do
+      delete note_path(notes(:alice_private))
+    end
+    assert_not_allowed notes(:alice_private)
+  end
+
+  test "deleting without access is a 404" do
+    switch_to users(:dave)
+
+    assert_no_difference "Note.count" do
+      delete note_path(notes(:alice_private))
+    end
+    assert_not_found
+  end
+
+  test "destroy asks to pick a user when there's no current user" do
+    assert_no_difference "Note.count" do
+      delete note_path(notes(:alice_private))
+    end
+    assert_asked_to_pick_user
+  end
 end
