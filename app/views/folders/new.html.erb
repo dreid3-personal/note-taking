@@ -1,0 +1,5 @@
+<% content_for :title, "New folder" %>
+
+<h1 class="h3 mb-4">New folder<% if @folder.parent %> in <%= @folder.parent.name %><% end %></h1>
+
+<%= render "form", folder: @folder, submit_label: "Create folder", cancel_path: @folder.parent || root_path %>

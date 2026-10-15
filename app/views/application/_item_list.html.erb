@@ -1,0 +1,16 @@
+<%# A list of folders and notes, as on the Notes page and inside a folder. %>
+<% if items.any? %>
+  <table class="table table-hover align-middle mb-4">
+    <tbody>
+      <% items.each do |item| %>
+        <tr>
+          <td><%= item_icon(item) %> <%= link_to item_name(item), item %></td>
+          <td class="text-body-secondary"><%= item_author(item) %></td>
+          <td class="text-body-secondary text-end"><%= time_tag item.updated_at, item.updated_at.strftime("%b %-d") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="text-body-secondary mb-4">Nothing here yet.</p>
+<% end %>

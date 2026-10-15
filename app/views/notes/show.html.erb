@@ -1,0 +1,24 @@
+<% content_for :title, @note.title %>
+
+<%= render "breadcrumbs", breadcrumbs: @breadcrumbs %>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+  <h1 class="h3 mb-0 me-auto">📄 <%= @note.title %></h1>
+  <% if allowed_to?(:edit, @note) %>
+    <%= link_to "Edit", edit_note_path(@note), class: "btn btn-outline-secondary btn-sm" %>
+  <% end %>
+  <% if allowed_to?(:author, @note) %>
+    <%= link_to "Share", sharing_note_path(@note), class: "btn btn-outline-secondary btn-sm" %>
+    <%= link_to "Move", move_note_path(@note), class: "btn btn-outline-secondary btn-sm" %>
+    <%= button_to "Delete", note_path(@note), method: :delete, class: "btn btn-outline-danger btn-sm",
+          form: { data: { turbo_confirm: "Delete this note?" } } %>
+  <% end %>
+</div>
+
+<p class="text-body-secondary small mb-4">
+  By <%= @note.author.name %> · Updated <%= time_tag @note.updated_at, @note.updated_at.to_fs(:long) %>
+</p>
+
+<div class="note-body">
+  <%= @body_html %>
+</div>

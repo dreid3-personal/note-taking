@@ -14,3 +14,7 @@
 .content {
   margin-left: 220px;
 }
+
+.breadcrumb {
+  --bs-breadcrumb-divider: "›";
+}

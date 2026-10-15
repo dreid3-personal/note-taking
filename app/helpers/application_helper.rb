@@ -17,4 +17,17 @@ module ApplicationHelper
   def user_switcher_options
     User.order(:name).pluck(:name, :id)
   end
+
+  def item_icon(item)
+    item.is_a?(Folder) ? "📁" : "📄"
+  end
+
+  def item_name(item)
+    item.is_a?(Folder) ? item.name : item.title
+  end
+
+  # A team folder belongs to its team, so it shows "Team" rather than whoever created the team.
+  def item_author(item)
+    item.is_a?(Folder) && item.team_folder? ? "Team" : item.author.name
+  end
 end

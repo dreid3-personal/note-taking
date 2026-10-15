@@ -77,6 +77,11 @@ are wired together.
 - An inaccessible item never appears.
 - Ordering: folders first, then notes, each alphabetical.
 
+**`Breadcrumbs`**
+- A folder's trail ends with the folder; a note's ends with its folder; a top-level note has none.
+- The section is where the trail's top item is listed: My notes, Team folders or Shared with me.
+- Folders the user can't open are left out, including the team folder of a team the author left.
+
 **`MarkdownRenderer`**
 - Headings, lists, task lists, tables and code blocks render.
 - `<script>` tags, `on…=` event attributes and `javascript:` links are removed.

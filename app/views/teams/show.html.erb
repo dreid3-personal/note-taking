@@ -3,8 +3,10 @@
 <div class="d-flex align-items-center gap-2 mb-4">
   <h1 class="h3 me-auto mb-0"><%= @team.name %></h1>
   <%= link_to "Rename", edit_team_path(@team), class: "btn btn-outline-secondary" %>
-  <%# TODO: link to folder_path(@team.folder) once the folder pages exist. %>
-  <button type="button" class="btn btn-outline-secondary" disabled>Open team folder</button>
+  <%# Only members can open the team folder; anyone else would get a 404. %>
+  <% if allowed_to?(:view, @team.folder) %>
+    <%= link_to "Open team folder", folder_path(@team.folder), class: "btn btn-outline-secondary" %>
+  <% end %>
 </div>
 
 <h2 class="h5">Members</h2>

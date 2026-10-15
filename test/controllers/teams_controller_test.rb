@@ -69,6 +69,15 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
     assert_select "main select[name=user_id] option", "Dave"
   end
 
+  test "show links members to the team folder, and doesn't offer it to anyone else" do
+    get team_path(teams(:engineering))
+    assert_select "a", text: "Open team folder", count: 0
+
+    patch current_user_path, params: { user_id: users(:bob).id }
+    get team_path(teams(:engineering))
+    assert_select "a[href=?]", folder_path(folders(:engineering)), "Open team folder"
+  end
+
   test "show says when everyone is already a member" do
     [ :alice, :bob, :dave ].each { |name| teams(:design).memberships.create!(user: users(name)) }
     get team_path(teams(:design))
