@@ -150,7 +150,10 @@ Also has access through a parent folder:
 - The access dropdowns offer **Can view** and **Can edit**. The "Everyone" dropdown also offers
   **No access**.
 - The **"Also has access through a parent folder"** list is read-only. It explains access that this
-  page can't remove, because inherited access can only be added to, never taken away.
+  page can't remove, because inherited access can only be added to, never taken away. Each person
+  or team is listed once, at the highest level they inherit, from the nearest folder that gives it.
+  The list runs nearest folder first; within a folder, its author (or team), then Everyone, then
+  its shares in the order they were added.
 
 ## Users page (`/users`)
 
