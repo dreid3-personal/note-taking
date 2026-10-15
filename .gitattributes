@@ -7,3 +7,6 @@ db/schema.rb linguist-generated
 vendor/* linguist-vendored
 config/credentials/*.yml.enc diff=rails_credentials
 config/credentials.yml.enc diff=rails_credentials
+
+# Keep bin/ scripts LF everywhere, so a commit from Windows can't break their shebangs on macOS/Linux.
+bin/* text eol=lf

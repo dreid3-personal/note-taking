@@ -25,6 +25,11 @@ Everything below runs with one command:
 bin/ci
 ```
 
+On Windows (PowerShell), put `ruby` in front of every `bin/` command in this plan: `ruby bin/ci`,
+`ruby bin/rubocop`, `ruby bin/rails server`, and so on. A bare `bin/ci` in PowerShell opens the file
+through its file association instead of running it, and can leave a stale `$LASTEXITCODE` of 0, which
+looks like a pass.
+
 A change is done only when `bin/ci` passes. Every rule in the design docs should have at least one
 test, and every bug fix should add a test that fails without the fix.
 
