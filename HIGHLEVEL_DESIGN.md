@@ -62,12 +62,14 @@ Creating a team also creates its **team folder**, a top-level folder with the te
 - Every current member of the team has `edit` access to it and everything inside it. This comes from
   the membership itself, not from a share.
 - It is renamed along with the team and can't be deleted, moved, or have its sharing changed.
-  Its `author_id` is the user who created the team.
+  Its `author_id` is the user who created the team. That is only a record: unlike other items,
+  being the author of a team folder gives no access, so a creator who leaves the team loses it like
+  any other member.
 
 ### Ownership
 
 Every item has an **author** (`author_id`, required, references `users`): the person who created it.
-The author can always view and edit their items.
+The author can always view and edit their items (team folders are the one exception, see above).
 
 ### Access levels
 
@@ -98,7 +100,7 @@ access than its parent folder, but not less.
 A user's access to an item is the **highest** of the following, checked for the item itself and for
 every folder above it:
 
-1. `edit`, if they are the author;
+1. `edit`, if they are the author (except of a team folder);
 2. `edit`, if it is the team folder of a team they belong to;
 3. the `everyone_access` setting;
 4. the share for them directly, if any;
@@ -181,7 +183,7 @@ each can be unit tested on its own. Following Rails convention, plain Ruby class
 |---|---|---|
 | `User`, `Team`, `Membership`, `Folder`, `Note`, `Share` | Associations, validations, normalization, and simple scopes. No permission logic. | Database |
 | `AccessLevel` | A value object for `none` < `view` < `edit`. Compares levels, picks the highest, and answers "does this level allow viewing / editing?" | Nothing |
-| `AccessResolver` | Works out a user's effective access to one item, following the rules in "Effective access" above. | The item, its parent folders, its shares, and the user's team ids |
+| `AccessResolver` | Works out a user's effective access to one item, following the rules in "Effective access" above: `access_to(item)` returns an `AccessLevel`, with `can_view?` / `can_edit?` shortcuts. `AccessResolver.inherited_grants(item)` lists who gets access from the folders above the item (grantee, level, source folder), for the sharing page's "Also has access through a parent folder". | The item, its parent folders, its shares, and the user's team ids |
 | `NotesHome` | Builds the Notes page's top level: the items in My notes, Team folders and Shared with me. | `AccessResolver` |
 | `MarkdownRenderer` | Turns a Markdown string into sanitized HTML. | The Markdown gem |
 | `Team.create_with_folder` | Creates a team, its team folder, and the creator's membership in one transaction. | `Team`, `Folder`, `Membership` |
