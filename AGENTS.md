@@ -29,6 +29,8 @@ If a change alters behavior described in these docs, update the docs in the same
    bin/ci
    ```
 
+   On Windows (PowerShell), run `ruby bin/ci` instead (see "Common commands").
+
    It runs RuboCop and the test suite. Add or update tests for what you changed, following the
    test plan's lists. Every bug fix gets a test that fails without the fix.
 2. **Walk through the relevant E2E walkthrough** in a browser, following the plan's setup and
@@ -58,6 +60,10 @@ Report what you verified, and anything you couldn't.
   ```
 
 ## Common commands
+
+On Windows (PowerShell), put `ruby` in front of every `bin/` command: `ruby bin/ci`, `ruby bin/rails test`,
+and so on. A bare `bin/ci` in PowerShell opens the file through its file association instead of running
+it, and can leave a stale `$LASTEXITCODE` of 0, which looks like a pass.
 
 | Task | Command |
 |---|---|
