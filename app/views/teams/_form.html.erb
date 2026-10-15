@@ -1,0 +1,12 @@
+<%= form_with model: team, class: "row g-2 align-items-start" do |form| %>
+  <div class="col-sm-5">
+    <%= form.label :name, class: "visually-hidden" %>
+    <%= form.text_field :name, placeholder: "Name", class: [ "form-control", { "is-invalid" => team.errors.any? } ] %>
+    <% team.errors.full_messages.each do |message| %>
+      <div class="invalid-feedback d-block"><%= message %></div>
+    <% end %>
+  </div>
+  <div class="col-sm-auto">
+    <%= form.submit submit, class: "btn btn-primary" %>
+  </div>
+<% end %>

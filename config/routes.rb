@@ -11,4 +11,7 @@ Rails.application.routes.draw do
 
   resource :current_user, only: :update
   resources :users, only: [ :index, :create ]
+  resources :teams, only: [ :index, :show, :create, :edit, :update ] do
+    resources :memberships, only: [ :create, :destroy ]
+  end
 end
