@@ -95,7 +95,7 @@ are wired together.
 - `Team.create_with_folder`: creates the team, its team folder and the creator's membership. If any
   part fails, none of them is saved.
 - `Membership`: a user can't be added to the same team twice.
-- `Folder`: can't be moved inside itself or its subfolders; can't be deleted while it has contents;
+- `Folder`: its `parent_id` can't point at itself or its subfolders; can't be deleted while it has contents;
   team folders can't be deleted, moved or re-shared.
 - `Note`: title required; saving with an old `lock_version` fails and keeps the newer content.
 - `Share`: exactly one of note or folder; exactly one of user or team; no duplicates for the same
@@ -106,7 +106,7 @@ are wired together.
 These check that every route enforces permissions on the server, not just by hiding buttons. The
 `Authorization` concern is tested here.
 
-For every note, folder and sharing route (`show`, `edit`, `update`, `destroy`, `move`, sharing
+For every note, folder and sharing route (`show`, `edit`, `update`, `destroy`, sharing
 pages, and the `shares` endpoints):
 
 - **No access:** `404`, and nothing changes.
@@ -152,10 +152,10 @@ Before each walkthrough:
   just missing from the list.
 - **"Hidden"** means all of these are true:
   - the item isn't listed anywhere on the Notes pages;
-  - its URL, and its `/edit`, `/move` and `/sharing` URLs, all show a 404 page.
+  - its URL, and its `/edit` and `/sharing` URLs, all show a 404 page.
 - **"View only"** means:
   - the item opens and its content is visible;
-  - there are no Edit, Move, Share or Delete buttons;
+  - there are no Edit, Share or Delete buttons;
   - visiting its `/edit` URL redirects back with "You don't have permission to do that.", and the
     content is unchanged.
 - **Reporting:** for every step, record pass or fail and what you saw. On a failure, take a
@@ -218,7 +218,7 @@ Before each walkthrough:
 2. As Bob, open Engineering, then **Eng plan**.
    **Expect:**
    - Bob can read it.
-   - An Edit button is shown, but no Share, Move or Delete.
+   - An Edit button is shown, but no Share or Delete.
 3. As Bob, edit **Eng plan**, change the body, and save.
    **Expect:** the change is saved, and Alice sees it too.
 4. As Bob, visit **Eng plan**'s `/sharing` URL directly.
@@ -252,7 +252,7 @@ Before each walkthrough:
 6. As Carol, edit **Alice private** and save.
    **Expect:**
    - The save works, and Alice sees the change.
-   - Carol still has no Share, Move or Delete buttons.
+   - Carol still has no Share or Delete buttons.
 7. As Carol, open **Alice private**'s edit page in tab 1 and leave it open. In tab 2, switch to Alice
    and change Carol's access back to Can view.
    **Expect:** Carol is listed with Can view.
@@ -292,7 +292,7 @@ Before each walkthrough:
    **Expect:** **Alice private** is listed under Shared with me, and it is view only.
 3. As Alice, set Everyone to Can edit.
 4. As Dave, edit **Alice private** and save.
-   **Expect:** the save works, and Dave still has no Share, Move or Delete buttons.
+   **Expect:** the save works, and Dave still has no Share or Delete buttons.
 5. As Alice, set Everyone back to No access.
    **Expect:** **Alice private** is hidden from Dave.
 
@@ -306,25 +306,17 @@ Before each walkthrough:
    - "This note was changed by someone else." is shown, and tab 2's change isn't saved.
    - Reloading the note shows tab 1's change.
 
-#### 1.7 Moving and deleting
+#### 1.7 Deleting
 
-1. As Alice, move **Alice nested** to the top level.
-   **Expect:**
-   - It is listed under My notes and is no longer inside **Alice folder**.
-   - Carol keeps edit access, from the note's own share.
-2. As Alice, move **Alice private** into **Alice folder**.
-   **Expect:**
-   - Carol can now view it, through the folder's Design share.
-   - It no longer appears under Carol's Shared with me.
-3. As Alice, try to delete **Alice folder** while it contains **Alice private**.
+Moving isn't supported yet, so this section only deletes.
+
+1. As Alice, try to delete **Alice folder** while it contains **Alice nested**.
    **Expect:** "Move or delete everything inside this folder first." Nothing is deleted.
-4. As Alice, open the move page for **Alice folder**.
-   **Expect:** the folder itself isn't offered as a destination.
-5. As Alice, delete **Alice private**, then **Alice folder**.
+2. As Alice, delete **Alice private** and **Alice nested**, then **Alice folder**.
    **Expect:**
    - Both are gone from every user's Notes page.
    - Their URLs show a 404 for everyone, including Alice.
-6. As Alice, visit the Engineering team folder's `/edit` and `/sharing` URLs directly.
+3. As Alice, visit the Engineering team folder's `/edit` and `/sharing` URLs directly.
    **Expect:** both redirect with "You don't have permission to do that."
 
 ---
