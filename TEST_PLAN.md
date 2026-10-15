@@ -61,6 +61,8 @@ are wired together.
   for viewing is still viewable.
 - No access at all gives `none`, including for a user on an unrelated team.
 - Team membership changes: joining a team grants its shares and its team folder; leaving removes them.
+- Share changes take effect immediately: lowering a share from edit to view gives view, and
+  removing it gives `none` (unless another rule still grants access).
 - An author keeps access to their own note inside a team folder after leaving the team.
 
 **`NotesHome`**
@@ -241,7 +243,14 @@ Before each walkthrough:
    **Expect:**
    - The save works, and Alice sees the change.
    - Carol still has no Share, Move or Delete buttons.
-7. As Alice, remove Carol's share.
+7. As Carol, open **Alice private**'s edit page in tab 1 and leave it open. In tab 2, switch to Alice
+   and change Carol's access back to Can view.
+   **Expect:** Carol is listed with Can view.
+8. In tab 2, switch back to Carol. In tab 1, change the body and save.
+   **Expect:**
+   - A redirect with "You don't have permission to do that.", and the change isn't saved.
+   - **Alice private** is now view only for Carol, but still listed under her Shared with me.
+9. As Alice, remove Carol's share.
    **Expect:** **Alice private** is hidden from Carol again.
 
 #### 1.4 Sharing with teams, and inherited access
