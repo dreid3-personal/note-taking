@@ -1,0 +1,17 @@
+<%= form_with model: note do |form| %>
+  <%= form.hidden_field :folder_id if note.new_record? %>
+  <%= form.hidden_field :lock_version if note.persisted? %>
+  <div class="mb-3">
+    <%= form.label :title, class: "form-label" %>
+    <%= form.text_field :title, autofocus: true, class: [ "form-control", { "is-invalid" => note.errors.include?(:title) } ] %>
+    <% note.errors.full_messages_for(:title).each do |message| %>
+      <div class="invalid-feedback"><%= message %></div>
+    <% end %>
+  </div>
+  <div class="mb-3">
+    <%= form.label :body, "Body (Markdown)", class: "form-label" %>
+    <%= form.text_area :body, rows: 20, class: "form-control font-monospace" %>
+  </div>
+  <%= form.submit submit_label, class: "btn btn-primary" %>
+  <%= link_to "Cancel", cancel_path, class: "btn btn-link" %>
+<% end %>

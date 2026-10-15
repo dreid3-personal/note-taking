@@ -1,0 +1,5 @@
+<% content_for :title, "Edit note" %>
+
+<h1 class="h3 mb-4">Edit "<%= @note.title_in_database %>"</h1>
+
+<%= render "form", note: @note, submit_label: "Save", cancel_path: @note %>
