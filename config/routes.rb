@@ -26,4 +26,20 @@ Rails.application.routes.draw do
   resources :notes, only: [ :show, :new, :create, :edit, :update, :destroy ], concerns: :shareable
   resources :folders, only: [ :show, :new, :create, :edit, :update, :destroy ], concerns: :shareable
   resources :shares, only: [ :create, :update, :destroy ]
+
+  # The JSON REST API (see API.md). The current user comes from the X-User-Id header.
+  namespace :api, defaults: { format: :json } do
+    resources :users, only: [ :index, :show, :create ]
+    resources :teams, only: [ :index, :show, :create, :update ] do
+      resources :members, only: [ :create, :destroy ], param: :user_id
+    end
+    get "home" => "home#show"
+    resources :folders, only: [ :index, :show, :create, :update, :destroy ] do
+      resources :shares, only: [ :index, :create ]
+    end
+    resources :notes, only: [ :index, :show, :create, :update, :destroy ] do
+      resources :shares, only: [ :index, :create ]
+    end
+    resources :shares, only: [ :update, :destroy ]
+  end
 end

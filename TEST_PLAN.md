@@ -128,6 +128,22 @@ Also check that the Users and Teams forms show validation errors with a `422` st
 form per controller (users, teams, folders, notes) gives a `422` with the "is too long" error for
 an over-long value and has a `maxlength` on each limited field.
 
+### API tests (`test/controllers/api/`, `test/integration/api_privacy_test.rb`)
+
+The REST API ([API.md](API.md)) gets the same checks, as JSON. For every `/api` endpoint:
+
+- **No `X-User-Id`, or an unknown one:** `401`, and nothing changes (except listing and adding users).
+- **No access:** `404`, with the same body as a missing record, and nothing changes.
+- **Too little access** (a viewer editing; an editor changing `everyone_access`, sharing or
+  deleting; anyone renaming, sharing or deleting a team folder): `403`, and nothing changes.
+- **Success:** the right status (`200`, `201` with `Location`, `204`) and body.
+- **Bad input:** a `422` with the errors for validation failures; a `400` for malformed JSON and for
+  arrays or objects in place of a single value; a `409` for a stale or missing note `lock_version`.
+
+`api_privacy_test.rb` scripts the core of E2E 1 over `/api` only, from an empty database: private
+notes, team folders (including leaving and rejoining), sharing with a user and lowering edit to
+view, a team share inherited through a folder, `everyone_access`, and the `409` on a concurrent edit.
+
 ### System test (`test/system/`)
 
 One short browser test of the main flow keeps the pages wired together. Create a user, create a

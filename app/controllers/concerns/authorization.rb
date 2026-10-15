@@ -5,6 +5,9 @@
 # - no access at all: a 404, exactly like a record that doesn't exist;
 # - some access, but not enough: a redirect to the item with "You don't have permission to do that."
 #
+# The JSON API (Api::BaseController) includes it too, and overrides render_not_found and
+# render_not_allowed to answer with a JSON 404 and 403 instead.
+#
 #   before_action -> { require_access!(@note, :view) }, only: :show
 #   before_action -> { require_access!(@folder, :rename) }, only: %i[edit update]
 #   before_action -> { require_author!(@folder) }, only: :destroy
@@ -16,7 +19,7 @@ module Authorization
   NOT_ALLOWED = "You don't have permission to do that.".freeze
 
   included do
-    helper_method :allowed_to?
+    helper_method :allowed_to? if respond_to?(:helper_method)
     rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   end
 
@@ -48,7 +51,7 @@ module Authorization
       return if allowed_to?(action, item)
 
       if current_user && access_resolver.can_view?(item)
-        redirect_to item, alert: NOT_ALLOWED, status: :see_other
+        render_not_allowed(item)
       else
         render_not_found
       end
@@ -65,6 +68,10 @@ module Authorization
 
     def team_folder?(item)
       item.is_a?(Folder) && item.team_folder?
+    end
+
+    def render_not_allowed(item)
+      redirect_to item, alert: NOT_ALLOWED, status: :see_other
     end
 
     def render_not_found

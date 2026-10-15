@@ -47,6 +47,34 @@ module ActionDispatch
       end
     end
 
+    # Calls the JSON API as the user (as: nil sends no X-User-Id), with params as a JSON body.
+    def api(method, path, as: nil, params: nil, headers: {})
+      headers = headers.merge("Content-Type" => "application/json")
+      headers["X-User-Id"] = as.id.to_s if as
+      send(method, path, params: params&.to_json, headers: headers)
+    end
+
+    def assert_api_unauthorized
+      assert_response :unauthorized
+      assert_match "X-User-Id", response.parsed_body["error"]
+    end
+
+    # Refused as if the item didn't exist: the same body as for a missing record.
+    def assert_api_not_found
+      assert_response :not_found
+      assert_equal({ "error" => "Not found" }, response.parsed_body)
+    end
+
+    def assert_api_forbidden
+      assert_response :forbidden
+      assert_equal({ "error" => "You don't have permission to do that." }, response.parsed_body)
+    end
+
+    def assert_api_bad_request
+      assert_response :bad_request
+      assert_equal({ "error" => "Bad request" }, response.parsed_body)
+    end
+
     # The visitor was sent to the Notes page to pick a user.
     def assert_asked_to_pick_user
       assert_redirected_to root_path

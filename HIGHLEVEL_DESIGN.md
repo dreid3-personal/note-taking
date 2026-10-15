@@ -170,6 +170,21 @@ Permissions are checked on the server for every request, not just by hiding butt
 - **No current user picked:** pages that need one redirect to the Notes page, which asks the
   visitor to pick a user.
 
+The JSON REST API under `/api` ([API.md](API.md)) checks the same rules through the same
+`Authorization` concern; `Api::BaseController` only changes how a refusal looks. It always answers
+in JSON:
+
+- **No current user** (a missing or unknown `X-User-Id` header): `401`. Only listing and adding
+  users work without one.
+- **No access at all:** `404 {"error": "Not found"}`, identical to a record that doesn't exist.
+- **Some access, but not enough:** `403 {"error": "You don't have permission to do that."}`, and
+  nothing changes.
+- **Malformed params** (bad JSON, a missing required key, or an array or object where a single
+  value belongs): `400`. They're checked before any lookup that could reveal whether a hidden
+  record exists, and an id that isn't a whole number counts as one that doesn't exist (`404`).
+- **Validation failures:** `422 {"errors": {"field": ["..."]}}`.
+- **A stale or missing `lock_version`** when updating a note: `409`.
+
 ### Concurrent edits
 
 Simultaneous editing isn't supported, but we guard against silent overwrites with Rails' built-in

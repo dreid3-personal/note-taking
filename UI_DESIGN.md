@@ -15,6 +15,8 @@ The screens and interactions for Note Taker. For the data model and permission r
   CDN. We don't use Bootstrap's JavaScript, so there are no modals or dropdown menus. Every action is
   a normal page or a form.
 - **Icons are emoji** (📁 folder, 📄 note) rather than an icon library.
+- **A JSON REST API sits next to the pages,** under `/api`, with its own controllers. See
+  [API.md](API.md).
 
 ## Layout
 
