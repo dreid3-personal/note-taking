@@ -54,9 +54,12 @@ What I settled on:
 
 ---
 
-A simple, local-only app for Markdown notes in folders, shared with people, teams or everyone.
+## Getting started
 
-## Install
+Note Taker is a simple, local-only app for Markdown notes in folders, shared with people, teams
+or everyone. One server runs both a web app and a REST API.
+
+### Install
 
 You need Ruby 3.4 (the version in `.ruby-version`; on Windows, use RubyInstaller with DevKit),
 Bundler and SQLite. Then, in the project folder:
@@ -69,7 +72,7 @@ This installs the gems, creates the database with a sample user, and starts the 
 
 On Windows PowerShell, put `ruby` in front of every `bin/` command, e.g. `ruby bin/setup`.
 
-## Run
+### Run
 
 ```bash
 bin/rails server
@@ -77,21 +80,66 @@ bin/rails server
 
 Open http://localhost:3000. Press Ctrl+C to stop it.
 
-The same server has a REST API under `/api`. Pick the user with the `X-User-Id` header:
+### Use the web app
+
+1. On the **Users** page, add people. Then pick yourself in the **You are** switcher.
+2. On the **Teams** page, create teams and add members. Each team gets a team folder that every
+   member can edit.
+3. On **Notes**, create folders and Markdown notes.
+4. Open a note or folder and click **Share** to give people, teams or everyone **Can view** or
+   **Can edit**. Access to a folder covers everything inside it.
+
+### Use the REST API
+
+The same server answers JSON under `/api`. Pick who you're acting as with the `X-User-Id` header.
+Every response includes ids, so swap in the ones you get back. On Windows, run these from Git
+Bash, or use `curl.exe` in PowerShell.
+
+Create two users. No header is needed for this:
 
 ```bash
-curl -H "X-User-Id: 1" http://localhost:3000/api/home
+curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d '{"name": "Alice", "email": "alice@example.com"}'
 ```
 
-[API.md](API.md) lists the endpoints.
+```bash
+curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d '{"name": "Bob", "email": "bob@example.com"}'
+```
 
-## Use
+As Alice (say id 2), create a note. It's private until she shares it:
 
-Add people on the Users page, then pick yourself in the "You are" switcher. Create teams; each
-gets a team folder. Create folders and Markdown notes, then share them as Can view or Can edit
-with people, teams or everyone. Access to a folder covers everything inside it.
+```bash
+curl -X POST http://localhost:3000/api/notes -H "X-User-Id: 2" -H "Content-Type: application/json" -d '{"title": "Plan", "body": "# Hello"}'
+```
 
-## Good to know
+As Bob (say id 3), that note is a `404`, exactly as if it didn't exist:
+
+```bash
+curl http://localhost:3000/api/notes/1 -H "X-User-Id: 3"
+```
+
+As Alice, share it with Bob for viewing:
+
+```bash
+curl -X POST http://localhost:3000/api/notes/1/shares -H "X-User-Id: 2" -H "Content-Type: application/json" -d '{"email": "bob@example.com", "access": "view"}'
+```
+
+Now Bob can read it, and it shows up under `shared_with_me` on his home:
+
+```bash
+curl http://localhost:3000/api/home -H "X-User-Id: 3"
+```
+
+As Alice, edit the note. Send the `lock_version` you last read; a stale one gets a `409` instead
+of overwriting someone else's change:
+
+```bash
+curl -X PATCH http://localhost:3000/api/notes/1 -H "X-User-Id: 2" -H "Content-Type: application/json" -d '{"body": "# Hello again", "lock_version": 0}'
+```
+
+[API.md](API.md) lists every endpoint (users, teams and members, home, folders, notes and
+shares) and every status code.
+
+### Good to know
 
 - It runs locally only, with no passwords: anyone can switch to any user, and the API trusts
   `X-User-Id`.
