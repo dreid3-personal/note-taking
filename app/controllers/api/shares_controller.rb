@@ -11,7 +11,7 @@ class Api::SharesController < Api::BaseController
     render json: {
       everyone_access: @item.everyone_access,
       shares: @item.shares.includes(:user, :team).order(:id).map { |share| share_json(share) },
-      inherited: AccessResolver.inherited_grants(@item).map { |grant| grant_json(grant) }
+      inherited: visible_inherited_grants(@item).map { |grant| grant_json(grant) }
     }
   end
 
@@ -78,7 +78,8 @@ class Api::SharesController < Api::BaseController
       }
     end
 
-    # Who has access through a folder above the item: a user, a team, or everyone.
+    # Who has access through a folder above the item: a user, a team, or everyone. The folder is
+    # null when the current user can't open it (see visible_inherited_grants).
     def grant_json(grant)
       grantee =
         case grant.grantee
@@ -86,6 +87,7 @@ class Api::SharesController < Api::BaseController
         when Team then { type: "team", id: grant.grantee.id, name: grant.grantee.name }
         else { type: "everyone" }
         end
-      { grantee: grantee, access: grant.level.to_s, folder: { id: grant.folder.id, name: grant.folder.name } }
+      folder = ({ id: grant.folder.id, name: grant.folder.name } if grant.folder)
+      { grantee: grantee, access: grant.level.to_s, folder: folder }
     end
 end

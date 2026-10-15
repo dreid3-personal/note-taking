@@ -196,6 +196,7 @@ All of these are for the item's author only, and never for a team folder.
 `GET /api/notes/:note_id/shares` and `GET /api/folders/:folder_id/shares` show the item's sharing
 settings: `everyone_access`, its `shares`, and `inherited`, the access it gets from the folders
 above it (`{"grantee": {"type": "user" | "team" | "everyone", "id", "name"}, "access", "folder": {"id", "name"}}`).
+`folder` is `null` when the current user can't open that folder.
 
 ```bash
 curl http://localhost:3000/api/notes/1/shares -H "X-User-Id: 1"

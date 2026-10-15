@@ -78,6 +78,19 @@ class SharingTest < ActionDispatch::IntegrationTest
     assert_texts "#inherited li", [ "👥 Design (can view, from 📁 Alice folder)" ]
   end
 
+  test "the inherited list doesn't name a parent folder the author can't open" do
+    Share.create!(folder: folders(:alice_subfolder), user: users(:bob), access: "edit")
+    note = Note.create!(title: "Bob's", author: users(:bob), folder: folders(:alice_subfolder))
+    switch_to users(:bob)
+    get sharing_note_path(note)
+
+    assert_texts "#inherited li", [
+      "Alice (can edit, from 📁 Alice subfolder)",
+      "👥 Design (can view, from a parent folder)"
+    ]
+    assert_no_match "Alice folder", response.body
+  end
+
   # update_sharing
 
   test "the author sets Everyone, and back to No access" do

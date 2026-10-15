@@ -178,7 +178,7 @@ class Api::NotesTest < ActionDispatch::IntegrationTest
       api :patch, "/api/notes/#{note.id}", as: users(:bob), params: { body: "Bob's" }.merge(lock)
       assert_response :conflict
     end
-    [ "abc", [ 1 ], 1.5 ].each do |lock_version|
+    [ "abc", [ 1 ], 1.5, "9" * 23, 9 * 10**22 ].each do |lock_version|
       api :patch, "/api/notes/#{note.id}", as: users(:bob), params: { body: "Bob's", lock_version: lock_version }
       assert_api_bad_request
     end

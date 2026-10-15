@@ -20,7 +20,9 @@ class Api::BaseController < ActionController::API
 
   wrap_parameters false
 
-  rescue_from BadRequest, ActionController::ParameterMissing, ActionDispatch::Http::Parameters::ParseError do
+  # ActiveModel::RangeError: a number too big for its column, such as a 23-digit lock_version.
+  rescue_from BadRequest, ActionController::ParameterMissing, ActionDispatch::Http::Parameters::ParseError,
+    ActiveModel::RangeError do
     render json: { error: "Bad request" }, status: :bad_request
   end
 

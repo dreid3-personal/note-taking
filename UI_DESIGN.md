@@ -187,7 +187,8 @@ Also has access through a parent folder:
   page can't remove, because inherited access can only be added to, never taken away. Each person
   or team is listed once, at the highest level they inherit, from the nearest folder that gives it.
   The list runs nearest folder first; within a folder, its author (or team), then Everyone, then
-  its shares in the order they were added.
+  its shares in the order they were added. A folder the author can't open (say, above a shared
+  folder they made a note in) isn't named: the line reads "from a parent folder".
 
 ## Users page (`/users`)
 

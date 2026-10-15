@@ -45,6 +45,21 @@ class Api::SharesTest < ActionDispatch::IntegrationTest
       response.parsed_body["inherited"].map { |grant| [ grant.dig("grantee", "type"), grant.dig("grantee", "name"), grant["access"], grant.dig("folder", "name") ] }
   end
 
+  test "inherited access doesn't name a folder the author can't open" do
+    Share.create!(folder: folders(:alice_subfolder), user: users(:bob), access: "edit")
+    api :post, "/api/notes", as: users(:bob), params: { title: "Bob's", folder_id: folders(:alice_subfolder).id }
+    note = response.parsed_body["id"]
+
+    api :get, "/api/notes/#{note}/shares", as: users(:bob)
+    assert_response :ok
+    assert_equal [
+      { "grantee" => { "type" => "user", "id" => users(:alice).id, "name" => "Alice" }, "access" => "edit",
+        "folder" => { "id" => folders(:alice_subfolder).id, "name" => "Alice subfolder" } },
+      { "grantee" => { "type" => "team", "id" => teams(:design).id, "name" => "Design" }, "access" => "view", "folder" => nil }
+    ], response.parsed_body["inherited"]
+    assert_not_includes response.body, "Alice folder"
+  end
+
   test "sharing settings are a 404 without access and a 403 for anyone but the author" do
     [ "/api/notes/#{@note.id}/shares", "/api/folders/#{folders(:alice_folder).id}/shares" ].each do |path|
       api :get, path, as: users(:dave)

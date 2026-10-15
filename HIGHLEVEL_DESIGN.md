@@ -169,6 +169,8 @@ Permissions are checked on the server for every request, not just by hiding butt
   changes. The new item's author is whoever creates it, even inside someone else's folder.
 - **No current user picked:** pages that need one redirect to the Notes page, which asks the
   visitor to pick a user.
+- **Folders above a shared item:** the sharing page lists who has access through parent folders,
+  but never names a folder the current user can't open (`Authorization#visible_inherited_grants`).
 
 The JSON REST API under `/api` ([API.md](API.md)) checks the same rules through the same
 `Authorization` concern; `Api::BaseController` only changes how a refusal looks. It always answers

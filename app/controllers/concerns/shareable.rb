@@ -17,7 +17,7 @@ module Shareable
   def sharing
     @shares = @shareable.shares.includes(:user, :team).order(:id)
     @teams = Team.order(:name)
-    @inherited_grants = AccessResolver.inherited_grants(@shareable)
+    @inherited_grants = visible_inherited_grants(@shareable)
     render "shares/sharing"
   end
 

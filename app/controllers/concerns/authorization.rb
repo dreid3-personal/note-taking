@@ -61,6 +61,15 @@ module Authorization
       require_access!(item, :author)
     end
 
+    # AccessResolver.inherited_grants(item) for the sharing page and API, without naming a folder
+    # the current user can't open: the author of a note inside a shared folder may not see the
+    # folders above that. Such a grant keeps its grantee and level, with no folder.
+    def visible_inherited_grants(item)
+      AccessResolver.inherited_grants(item).map do |grant|
+        allowed_to?(:view, grant.folder) ? grant : grant.with(folder: nil)
+      end
+    end
+
     # One resolver per request, so the user's teams and shares are loaded once.
     def access_resolver
       @access_resolver ||= AccessResolver.new(current_user)
