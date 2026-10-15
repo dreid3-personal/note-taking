@@ -1,16 +1,18 @@
-# Run using bin/ci
+# Run using bin/ci (on Windows: ruby bin/ci)
+#
+# Steps are launched through `ruby` because Windows can't execute shebang scripts.
 
 CI.run do
-  step "Setup", "bin/setup --skip-server"
+  step "Setup", "ruby bin/setup --skip-server"
 
-  step "Style: Ruby", "bin/rubocop"
+  step "Style: Ruby", "ruby bin/rubocop"
 
-  step "Security: Importmap vulnerability audit", "bin/importmap audit"
-  step "Tests: Rails", "bin/rails test"
-  step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
+  step "Security: Importmap vulnerability audit", "ruby bin/importmap audit"
+  step "Tests: Rails", "ruby bin/rails test"
+  step "Tests: Seeds", "ruby bin/rails db:seed:replant RAILS_ENV=test"
 
   # Optional: Run system tests
-  # step "Tests: System", "bin/rails test:system"
+  # step "Tests: System", "ruby bin/rails test:system"
 
   # Optional: set a green GitHub commit status to unblock PR merge.
   # Requires the `gh` CLI and `gh extension install basecamp/gh-signoff`.
