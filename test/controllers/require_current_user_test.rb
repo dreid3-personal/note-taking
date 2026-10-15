@@ -20,6 +20,7 @@ class RequireCurrentUserTest < ActionDispatch::IntegrationTest
 
       get "/guarded"
       assert_redirected_to root_path
+      assert_response :see_other
 
       patch current_user_path, params: { user_id: users(:alice).id }
       get "/guarded"

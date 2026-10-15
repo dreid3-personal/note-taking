@@ -165,7 +165,7 @@ GitHub-style image paste via Active Storage, with no data migration.
 
 ## Login
 
-No passwords for now. The header has a "you are: [user]" switcher, and the chosen user's id is
+No passwords for now. The sidebar has a "You are: [user]" switcher, and the chosen user's id is
 stored in the session as the current user.
 
 Password login can be added later with Rails 8's built-in `bin/rails generate authentication`.

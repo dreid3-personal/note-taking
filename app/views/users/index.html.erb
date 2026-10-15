@@ -30,14 +30,14 @@
     <%= form.label :name, class: "visually-hidden" %>
     <%= form.text_field :name, placeholder: "Name", class: [ "form-control", { "is-invalid" => @user.errors.include?(:name) } ] %>
     <% @user.errors.full_messages_for(:name).each do |message| %>
-      <div class="invalid-feedback d-block"><%= message %></div>
+      <div class="invalid-feedback"><%= message %></div>
     <% end %>
   </div>
   <div class="col-sm-5">
     <%= form.label :email, class: "visually-hidden" %>
     <%= form.email_field :email, placeholder: "Email", class: [ "form-control", { "is-invalid" => @user.errors.include?(:email) } ] %>
     <% @user.errors.full_messages_for(:email).each do |message| %>
-      <div class="invalid-feedback d-block"><%= message %></div>
+      <div class="invalid-feedback"><%= message %></div>
     <% end %>
   </div>
   <div class="col-sm-auto">

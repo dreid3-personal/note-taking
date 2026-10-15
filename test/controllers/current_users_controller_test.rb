@@ -16,6 +16,12 @@ class CurrentUsersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "a referer on another host redirects to the Notes page instead" do
+    patch current_user_path, params: { user_id: users(:bob).id }, headers: { "HTTP_REFERER" => "https://evil.example/x" }
+
+    assert_redirected_to root_url
+  end
+
   test "picking the blank option clears the current user" do
     patch current_user_path, params: { user_id: users(:bob).id }
     patch current_user_path, params: { user_id: "" }

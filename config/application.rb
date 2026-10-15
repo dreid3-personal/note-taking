@@ -35,5 +35,9 @@ module NoteTaker
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Don't wrap invalid fields in <div class="field_with_errors">. Forms mark them with Bootstrap's
+    # is-invalid instead, and the wrapper would break its `.is-invalid ~ .invalid-feedback` selector.
+    config.action_view.field_error_proc = ->(html_tag, _instance) { html_tag }
   end
 end

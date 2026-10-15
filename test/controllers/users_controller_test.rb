@@ -41,5 +41,8 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_select ".invalid-feedback", "Name can't be blank"
     assert_select ".invalid-feedback", "Email can't be blank"
+    # Bootstrap only shows the feedback when it follows the invalid field directly.
+    assert_select ".field_with_errors", count: 0
+    assert_select "input.is-invalid ~ .invalid-feedback", count: 2
   end
 end

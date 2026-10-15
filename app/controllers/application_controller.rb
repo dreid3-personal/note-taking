@@ -21,6 +21,6 @@ class ApplicationController < ActionController::Base
     # Use as a before_action on pages that need a current user. Sends the visitor to the Notes page,
     # which asks them to pick one.
     def require_current_user
-      redirect_to root_path unless current_user
+      redirect_to root_path, status: :see_other unless current_user
     end
 end
