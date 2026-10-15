@@ -1,0 +1,24 @@
+# Team folders: one per team, top-level, authored by the team's creator.
+engineering:
+  name: Engineering
+  author: alice
+  team: engineering
+
+design:
+  name: Design
+  author: carol
+  team: design
+
+# Alice's own folders: Alice folder > Alice subfolder.
+alice_folder:
+  name: Alice folder
+  author: alice
+
+alice_subfolder:
+  name: Alice subfolder
+  author: alice
+  parent: alice_folder
+
+empty_folder:
+  name: Empty folder
+  author: alice

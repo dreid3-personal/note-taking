@@ -1,0 +1,16 @@
+alice_private:
+  title: Alice private
+  body: "# Heading"
+  author: alice
+
+alice_nested:
+  title: Alice nested
+  body: Inside Alice folder.
+  author: alice
+  folder: alice_folder
+
+eng_plan:
+  title: Eng plan
+  body: The plan.
+  author: alice
+  folder: engineering
