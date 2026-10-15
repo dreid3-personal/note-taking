@@ -6,6 +6,9 @@ class Folder < ApplicationRecord
   has_many :notes
   has_many :shares, dependent: :destroy
 
+  # Whether a folder is a team folder is fixed when it is created.
+  attr_readonly :team_id
+
   enum :everyone_access, { none: "none", view: "view", edit: "edit" }, prefix: :everyone, validate: true
 
   normalizes :name, with: ->(name) { name.strip }
@@ -35,7 +38,8 @@ class Folder < ApplicationRecord
     end
 
     def team_folder_stays_put
-      errors.add(:parent, "can't be set: a team folder can't be moved") if parent_id.present?
+      errors.add(:base, "A team folder can't be moved.") if parent_id.present?
+      errors.add(:name, "of a team folder changes only with the team") if name != team&.name
       errors.add(:everyone_access, "can't be changed on a team folder") unless everyone_none?
     end
 

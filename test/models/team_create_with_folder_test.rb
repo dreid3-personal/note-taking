@@ -28,6 +28,9 @@ class TeamCreateWithFolderTest < ActiveSupport::TestCase
     end
   end
 
+  # There's no test for only the membership failing: once the folder saves with the same creator,
+  # the membership can't fail, and Minitest 6 has no stubbing to force it. This test already shows
+  # that the team, saved first, is rolled back.
   test "saves nothing when the team folder can't be created" do
     assert_no_difference [ "Team.count", "Folder.count", "Membership.count" ] do
       team = Team.create_with_folder(name: "Marketing", creator: nil)

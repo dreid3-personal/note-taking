@@ -77,7 +77,21 @@ class FolderTest < ActiveSupport::TestCase
     folder = folders(:engineering)
 
     assert_not folder.update(parent: folders(:alice_folder))
-    assert_includes folder.errors[:parent], "can't be set: a team folder can't be moved"
+    assert_includes folder.errors[:base], "A team folder can't be moved."
+  end
+
+  test "a team folder can't be renamed on its own" do
+    folder = folders(:engineering)
+
+    assert_not folder.update(name: "Other")
+    assert_includes folder.errors[:name], "of a team folder changes only with the team"
+    assert_equal "Engineering", folder.reload.name
+  end
+
+  test "a team folder stays a team folder, and an ordinary folder can't become one" do
+    assert_raises(ActiveRecord::ReadonlyAttributeError) { folders(:engineering).update(team_id: nil) }
+    assert_raises(ActiveRecord::ReadonlyAttributeError) { folders(:empty_folder).update(team: teams(:engineering)) }
+    assert_equal teams(:engineering), folders(:engineering).reload.team
   end
 
   test "the database keeps a team folder at the top level even when validation is skipped" do
@@ -102,7 +116,7 @@ class FolderTest < ActiveSupport::TestCase
   end
 
   test "the unique index allows only one folder per team" do
-    folder = Folder.new(name: "Second", author: users(:alice), team: teams(:engineering))
+    folder = Folder.new(name: "Engineering", author: users(:alice), team: teams(:engineering))
 
     assert_raises(ActiveRecord::RecordNotUnique) { folder.save! }
   end
