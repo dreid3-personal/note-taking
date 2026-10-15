@@ -41,6 +41,7 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
       assert_response :unprocessable_entity
       assert_select ".invalid-feedback", "Name has already been taken"
       assert_select "input.is-invalid[name='team[name]'][value=?]", name
+      assert_select ".field_with_errors", count: 0
     end
   end
 
@@ -118,6 +119,7 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
 
     get teams_path
     assert_redirected_to root_path
+    assert_response :see_other
     get team_path(team)
     assert_redirected_to root_path
     get edit_team_path(team)

@@ -1,9 +1,13 @@
 <%= form_with model: team, class: "row g-2 align-items-start" do |form| %>
   <div class="col-sm-5">
     <%= form.label :name, class: "visually-hidden" %>
-    <%= form.text_field :name, placeholder: "Name", class: [ "form-control", { "is-invalid" => team.errors.any? } ] %>
-    <% team.errors.full_messages.each do |message| %>
-      <div class="invalid-feedback d-block"><%= message %></div>
+    <%= form.text_field :name, placeholder: "Name", class: [ "form-control", { "is-invalid" => team.errors.include?(:name) } ] %>
+    <% team.errors.full_messages_for(:name).each do |message| %>
+      <div class="invalid-feedback"><%= message %></div>
+    <% end %>
+    <%# Errors from creating the team folder or the first membership, which Team.create_with_folder adds to base. %>
+    <% team.errors.full_messages_for(:base).each do |message| %>
+      <div class="form-text text-danger"><%= message %></div>
     <% end %>
   </div>
   <div class="col-sm-auto">
