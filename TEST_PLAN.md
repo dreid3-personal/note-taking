@@ -87,6 +87,11 @@ are wired together.
 - `<script>` tags, `on…=` event attributes and `javascript:` links are removed.
 
 **Models**
+- **Length limits,** for each field in HIGHLEVEL_DESIGN.md's "Length limits" (`User` name and
+  email, `Team` name, `Folder` name, `Note` title and body): a value at the limit saves, and one
+  character over is rejected with "is too long". A note body's `
+` is saved as `
+`.
 - `User`: name and email required; emails saved lowercased and trimmed; duplicate emails rejected,
   including ones differing only by case or spaces; the unique index rejects a duplicate even when
   the validation is skipped.
@@ -113,10 +118,15 @@ pages, and the `shares` endpoints):
 - **View access, attempting a change:** a redirect with "You don't have permission to do that.",
   and nothing changes.
 - **Edit access but not the author, attempting to share or delete:** redirected, and nothing changes.
-- **Team folders:** renaming, moving, sharing or deleting is refused for everyone.
+- **Team folders:** renaming, sharing or deleting is refused for everyone.
 - **No current user picked:** redirected to the Notes page's "Pick a user" message.
 
-Also check that the Users and Teams forms show validation errors with a `422` status.
+- **Moving isn't supported:** `/notes/:id/move` and `/folders/:id/move` are `404`, and the edit
+  forms ignore `folder_id` and `parent_id`, even from the author.
+
+Also check that the Users and Teams forms show validation errors with a `422` status, and that one
+form per controller (users, teams, folders, notes) gives a `422` with the "is too long" error for
+an over-long value and has a `maxlength` on each limited field.
 
 ### System test (`test/system/`)
 

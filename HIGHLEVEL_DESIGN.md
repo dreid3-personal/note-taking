@@ -35,6 +35,24 @@ shares          id, folder_id (nullable), note_id (nullable),
 
 All tables also have the standard `created_at` / `updated_at` timestamps.
 
+### Length limits
+
+| Field | Max characters |
+|---|---|
+| `users.name` | 100 |
+| `users.email` | 254 |
+| `teams.name` | 100 (a team folder takes its team's name, so it matches `folders.name`) |
+| `folders.name` | 100 |
+| `notes.title` | 200 |
+| `notes.body` | 100,000 |
+
+Each limit is a model validation with a friendly error, such as "is too long (maximum is 200
+characters)"; the body's error also says how long the body is. The form field has a matching
+`maxlength`. There is no database constraint. A note body's `
+` line breaks, which browsers
+submit, are saved as `
+`, so the textarea's `maxlength` and the validation count the same way.
+
 "Item" below means a note or a folder.
 
 ### Users and teams

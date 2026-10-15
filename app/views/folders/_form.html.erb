@@ -2,7 +2,7 @@
   <%= form.hidden_field :parent_id if folder.new_record? %>
   <div class="col-sm-6">
     <%= form.label :name, class: "visually-hidden" %>
-    <%= form.text_field :name, placeholder: "Name", autofocus: true, class: [ "form-control", { "is-invalid" => folder.errors.include?(:name) } ] %>
+    <%= form.text_field :name, placeholder: "Name", maxlength: Folder::NAME_MAX_LENGTH, autofocus: true, class: [ "form-control", { "is-invalid" => folder.errors.include?(:name) } ] %>
     <% folder.errors.full_messages_for(:name).each do |message| %>
       <div class="invalid-feedback"><%= message %></div>
     <% end %>

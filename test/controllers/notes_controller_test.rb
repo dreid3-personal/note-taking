@@ -491,4 +491,16 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     end
     assert_asked_to_pick_user
   end
+
+  test "saving an over-long body shows the error, and the fields have a maxlength" do
+    note = notes(:alice_nested)
+    switch_to users(:alice)
+    patch note_path(note), params: { note: { title: note.title, body: "a" * 100_001, lock_version: note.lock_version } }
+
+    assert_response :unprocessable_entity
+    assert_select "textarea.is-invalid ~ .invalid-feedback", "Body is too long (100,001 characters; the maximum is 100,000)"
+    assert_select "input[name='note[title]'][maxlength='200']"
+    assert_select "textarea[name='note[body]'][maxlength='100000']"
+    assert_equal "Inside Alice folder.", note.reload.body
+  end
 end

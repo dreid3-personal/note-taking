@@ -144,4 +144,14 @@ class TeamsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
     assert_equal "Engineering", team.reload.name
   end
+
+  test "create with an over-long name shows the error, and the field has a maxlength" do
+    assert_no_difference "Team.count" do
+      post teams_path, params: { team: { name: "a" * 101 } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "input.is-invalid ~ .invalid-feedback", "Name is too long (maximum is 100 characters)"
+    assert_select "input[name='team[name]'][maxlength='100']"
+  end
 end

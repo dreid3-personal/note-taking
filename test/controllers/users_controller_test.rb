@@ -45,4 +45,15 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select ".field_with_errors", count: 0
     assert_select "input.is-invalid ~ .invalid-feedback", count: 2
   end
+
+  test "create with an over-long name shows the error, and the fields have a maxlength" do
+    assert_no_difference "User.count" do
+      post users_path, params: { user: { name: "a" * 101, email: "long@example.com" } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "input.is-invalid ~ .invalid-feedback", "Name is too long (maximum is 100 characters)"
+    assert_select "input[name='user[name]'][maxlength='100']"
+    assert_select "input[name='user[email]'][maxlength='254']"
+  end
 end

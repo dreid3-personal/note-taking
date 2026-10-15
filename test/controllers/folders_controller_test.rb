@@ -387,4 +387,14 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
     end
     assert_asked_to_pick_user
   end
+
+  test "rename with an over-long name shows the error, and the field has a maxlength" do
+    switch_to users(:alice)
+    patch folder_path(folders(:alice_folder)), params: { folder: { name: "a" * 101 } }
+
+    assert_response :unprocessable_entity
+    assert_select "input.is-invalid ~ .invalid-feedback", "Name is too long (maximum is 100 characters)"
+    assert_select "input[name='folder[name]'][maxlength='100']"
+    assert_equal "Alice folder", folders(:alice_folder).reload.name
+  end
 end

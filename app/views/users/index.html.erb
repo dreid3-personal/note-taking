@@ -28,14 +28,14 @@
 <%= form_with model: @user, class: "row g-2 align-items-start" do |form| %>
   <div class="col-sm-4">
     <%= form.label :name, class: "visually-hidden" %>
-    <%= form.text_field :name, placeholder: "Name", class: [ "form-control", { "is-invalid" => @user.errors.include?(:name) } ] %>
+    <%= form.text_field :name, placeholder: "Name", maxlength: User::NAME_MAX_LENGTH, class: [ "form-control", { "is-invalid" => @user.errors.include?(:name) } ] %>
     <% @user.errors.full_messages_for(:name).each do |message| %>
       <div class="invalid-feedback"><%= message %></div>
     <% end %>
   </div>
   <div class="col-sm-5">
     <%= form.label :email, class: "visually-hidden" %>
-    <%= form.email_field :email, placeholder: "Email", class: [ "form-control", { "is-invalid" => @user.errors.include?(:email) } ] %>
+    <%= form.email_field :email, placeholder: "Email", maxlength: User::EMAIL_MAX_LENGTH, class: [ "form-control", { "is-invalid" => @user.errors.include?(:email) } ] %>
     <% @user.errors.full_messages_for(:email).each do |message| %>
       <div class="invalid-feedback"><%= message %></div>
     <% end %>

@@ -135,4 +135,12 @@ class FolderTest < ActiveSupport::TestCase
       Folder.insert_all!([ { name: "Bad", author_id: users(:alice).id, everyone_access: "admin" } ])
     end
   end
+
+  test "a name can be up to 100 characters" do
+    assert Folder.new(name: "a" * 100, author: users(:alice)).valid?
+
+    folder = Folder.new(name: "a" * 101, author: users(:alice))
+    assert_not folder.valid?
+    assert_includes folder.errors[:name], "is too long (maximum is 100 characters)"
+  end
 end

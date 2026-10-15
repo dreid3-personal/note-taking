@@ -8,6 +8,9 @@ class User < ApplicationRecord
   normalizes :name, with: ->(name) { name.strip }
   normalizes :email, with: ->(email) { email.strip.downcase }
 
-  validates :name, presence: true
-  validates :email, presence: true, uniqueness: { case_sensitive: false }
+  NAME_MAX_LENGTH = 100
+  EMAIL_MAX_LENGTH = 254
+
+  validates :name, presence: true, length: { maximum: NAME_MAX_LENGTH }
+  validates :email, presence: true, length: { maximum: EMAIL_MAX_LENGTH }, uniqueness: { case_sensitive: false }
 end
