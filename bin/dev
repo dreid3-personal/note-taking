@@ -1,2 +1,3 @@
 #!/usr/bin/env ruby
+# Launched through `ruby` because Windows can't execute shebang scripts.
 exec "ruby", "bin/rails", "server", *ARGV
