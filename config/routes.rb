@@ -11,6 +11,9 @@ Rails.application.routes.draw do
 
   resource :current_user, only: :update
   resources :users, only: [ :index, :create ]
+  resources :teams, only: [ :index, :show, :create, :edit, :update ] do
+    resources :memberships, only: [ :create, :destroy ]
+  end
 
   # Notes and folders share the move and sharing pages. Each GET shows the page and the PATCH
   # submits it. All the routes are defined here up front; their actions are added as they are built.

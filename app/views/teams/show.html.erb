@@ -1,0 +1,47 @@
+<% content_for :title, @team.name %>
+
+<div class="d-flex align-items-center gap-2 mb-4">
+  <h1 class="h3 me-auto mb-0"><%= @team.name %></h1>
+  <%= link_to "Rename", edit_team_path(@team), class: "btn btn-outline-secondary" %>
+  <%# Only members can open the team folder; anyone else would get a 404. %>
+  <% if allowed_to?(:view, @team.folder) %>
+    <%= link_to "Open team folder", folder_path(@team.folder), class: "btn btn-outline-secondary" %>
+  <% end %>
+</div>
+
+<h2 class="h5">Members</h2>
+
+<% if @memberships.any? %>
+  <table class="table mb-5">
+    <tbody>
+      <% @memberships.each do |membership| %>
+        <tr>
+          <td><%= membership.user.name %></td>
+          <td><%= membership.user.email %></td>
+          <td class="text-end">
+            <%= button_to "Remove", team_membership_path(@team, membership), method: :delete,
+                  class: "btn btn-sm btn-outline-danger" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="mb-5">This team has no members.</p>
+<% end %>
+
+<h2 class="h5">Add a member</h2>
+
+<% if @addable_users.any? %>
+  <%= form_with url: team_memberships_path(@team), class: "row g-2 align-items-start" do |form| %>
+    <div class="col-sm-5">
+      <%= form.label :user_id, "User", class: "visually-hidden" %>
+      <%= form.select :user_id, @addable_users.pluck(:name, :id), { include_blank: "Pick a user" }, class: "form-select" %>
+    </div>
+    <div class="col-sm-auto">
+      <%= form.submit "Add", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+<% else %>
+  <p>Everyone is already a member.</p>
+<% end %>
